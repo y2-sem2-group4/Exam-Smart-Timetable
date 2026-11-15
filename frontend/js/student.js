@@ -1,11 +1,11 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // Extract student_no from the URL path, or default to "12345" for local testing if viewing directly
+    // Extract student_no from the URL path, or default to "12345" for local testing
     const pathSegments = window.location.pathname.split("/").filter(Boolean);
     let studentNo = pathSegments[pathSegments.length - 1];
     
-    // If testing locally and filename is still timetable.html, default to a valid test ID ("12345") or test an invalid one ("999")
-    if (studentNo === "timetable.html" || !studentNo) {
-        studentNo = "12345"; // Change to "999" to test the error state!
+    // Fallback for local testing so it loads valid data instead of "timetable.html"
+    if (!studentNo || studentNo === "timetable.html" || studentNo === "student") {
+        studentNo = "12345"; // Change to "999" anytime to test the error state!
     }
 
     const studentIdDisplay = document.getElementById("student-id-display");
@@ -31,28 +31,32 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Validate student number and render data or error
     if (studentNo && mockDatabase[studentNo]) {
-        errorBanner.style.display = "none";
-        examTable.style.display = "table";
+        if (errorBanner) errorBanner.style.display = "none";
+        if (examTable) examTable.style.display = "table";
         
         const exams = mockDatabase[studentNo];
-        examTbody.innerHTML = "";
+        if (examTbody) {
+            examTbody.innerHTML = "";
 
-        exams.forEach(exam => {
-            const row = document.createElement("tr");
-            row.innerHTML = `
-                <td>${exam.code}</td>
-                <td>${exam.name}</td>
-                <td>${exam.date}</td>
-                <td>${exam.time}</td>
-                <td>${exam.room}</td>
-                <td><span class="badge badge-${exam.status}">${exam.status}</span></td>
-            `;
-            examTbody.appendChild(row);
-        });
+            exams.forEach(exam => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${exam.code}</td>
+                    <td>${exam.name}</td>
+                    <td>${exam.date}</td>
+                    <td>${exam.time}</td>
+                    <td>${exam.room}</td>
+                    <td><span class="badge badge-${exam.status}">${exam.status}</span></td>
+                `;
+                examTbody.appendChild(row);
+            });
+        }
     } else {
         // Clean error state for invalid student number
-        examTable.style.display = "none";
-        errorBanner.style.display = "block";
-        errorMessage.textContent = `Error: Student number "${studentNo}" was not found in the system.`;
+        if (examTable) examTable.style.display = "none";
+        if (errorBanner) errorBanner.style.display = "block";
+        if (errorMessage) {
+            errorMessage.textContent = `Error: Student number "${studentNo}" was not found in the system.`;
+        }
     }
 });
