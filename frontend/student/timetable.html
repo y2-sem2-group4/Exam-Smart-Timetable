@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Timetable</title>
+    <!-- Link to your CSS -->
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <h1>My Exam Timetable</h1>
+
+    <!-- Legend (Optional, but good for UI) -->
+    <div class="badge-legend" style="margin-bottom: 20px;">
+        <span class="badge badge-confirmed">Confirmed</span>
+        <span class="badge badge-clash">Clash Flagged</span>
+        <span class="badge badge-pending">Pending</span>
+    </div>
+
+    <!-- The Table -->
+    <table border="1" style="width: 100%; border-collapse: collapse; text-align: left;">
+        <thead>
+            <tr>
+                <th>Module</th>
+                <th>Date</th>
+                <th>Room</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="timetable-body">
+            <!-- JavaScript will insert rows here -->
+        </tbody>
+    </table>
+
+    <!-- Link to your JS -->
+    <script src="../js/student.js"></script>
+</body>
+</html>
