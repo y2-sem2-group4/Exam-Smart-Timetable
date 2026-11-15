@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Exam Timetable</title>
+    <link rel="stylesheet" href="../../css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Student Exam Timetable</h1>
+        
+        <!-- Error Banner (Hidden by default) -->
+        <div id="error-banner" class="error-banner" style="display: none;">
+            <p id="error-message">Student number not found. Please check and try again.</p>
+        </div>
+
+        <!-- Timetable Content -->
+        <div id="timetable-container">
+            <p>Loading timetable for Student ID: <span id="student-id-display"></span>...</p>
+            <table class="timetable-table" id="exam-table" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Course Code</th>
+                        <th>Course Name</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Room</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="exam-tbody">
+                    <!-- Rows will be injected via JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="../../js/student.js"></script>
+</body>
+</html>
