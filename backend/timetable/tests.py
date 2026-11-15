@@ -1,4 +1,5 @@
 from django.test import TestCase
+from django.urls import reverse
 from .models import (
     Enrolment,
     Exam,
@@ -99,3 +100,30 @@ class ClashDetectionTests(TestCase):
 
         self.assertEqual(first_exam.status, ExamStatus.SCHEDULED)
         self.assertEqual(second_exam.status, ExamStatus.SCHEDULED)
+
+
+class ExamListApiTests(TestCase):
+    def setUp(self):
+        self.unit = Unit.objects.create(
+            unit_code="API101",
+            unit_name="API Testing",
+        )
+        self.room = Room.objects.create(
+            room_name="API Room",
+            capacity=50,
+        )
+        self.exam = Exam.objects.create(
+            unit=self.unit,
+            room=self.room,
+            exam_date=date(2026, 12, 1),
+            start_time=time(9, 0),
+            end_time=time(11, 0),
+        )
+    def test_get_exams_returns_exam_data(self):
+        response = self.client.get(reverse("exam-list"))
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data["exams"]), 1)
+        self.assertEqual(data["exams"][0]["id"], self.exam.id)
+        self.assertEqual(data["exams"][0]["unit_code"], "API101")
+        self.assertEqual(data["exams"][0]["status"], ExamStatus.SCHEDULED)
