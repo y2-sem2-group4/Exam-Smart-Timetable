@@ -119,5 +119,5 @@ Branching rules, commit format, PR process, and what "done" means before merging
 | Module | Owners | Covers |
 |---|---|---|
 | Backend Core | Edith, Lenny | Models, clash-detection logic, database |
-| Admin Interface | Craig, Daniel | Exam logging, dashboard, clash review |
-| Student Interface | June, Angel | Read-only timetable lookup |
+| Admin Interface | Angel, Daniel | Exam logging, dashboard, clash review |
+| Student Interface | June, Craig | Read-only timetable lookup |
