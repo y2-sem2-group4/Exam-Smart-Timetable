@@ -37,12 +37,23 @@ def check_and_flag_exam_clashes(exam):
 
         if shared_student_exists:
             clash_detected = True
+            reason=f"Student clash with {other_exam.unit.unit_code}"
             reasons.append(f"Student clash with {other_exam.unit.unit_code}")
+
+            #updating other exam status to pending review 
+            exam.status = ExamStatus.PENDING_REVIEW
+            exam.clash_reason = reason
+    
+            other_exam.status = ExamStatus.PENDING_REVIEW
+            other_exam.clash_reason = reason
+            other_exam.save() # Save the updated status and updated_at timestamp (FR-10)
+
 
     # 4. Automated System Status Flagging (FR-04)
     if clash_detected:
         exam.status = ExamStatus.PENDING_REVIEW
         exam.clash_reason = " | ".join(reasons)
+
     else:
         # If it was previously flagged but the admin fixed it, mark it resolved
         if exam.status == ExamStatus.PENDING_REVIEW:

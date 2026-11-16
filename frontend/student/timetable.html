@@ -3,36 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Timetable</title>
-    <!-- Link to your CSS -->
+    <title>Student Exam Timetable</title>
+    <!-- Fixed path: go up one level to 'frontend/', then into 'css/' -->
     <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
-    <h1>My Exam Timetable</h1>
+    <div class="container">
+        <h1>Student Exam Timetable</h1>
 
-    <!-- Legend (Optional, but good for UI) -->
-    <div class="badge-legend" style="margin-bottom: 20px;">
-        <span class="badge badge-confirmed">Confirmed</span>
-        <span class="badge badge-clash">Clash Flagged</span>
-        <span class="badge badge-pending">Pending</span>
+        <!-- Error Banner (Hidden by default) -->
+        <div id="error-banner" class="error-banner" style="display: none;">
+            <p id="error-message">Student number not found. Please check and try again.</p>
+        </div>
+
+        <!-- Timetable Content -->
+        <div id="timetable-container">
+            <p>Loading timetable for Student ID: <span id="student-id-display"></span>...</p>
+            <div class="badge-legend" style="margin-bottom: 20px;">
+                <span class="badge badge-confirmed">Confirmed</span>
+                <span class="badge badge-clash">Clash Flagged</span>
+                <span class="badge badge-pending">Pending</span>
+            </div>
+            <table class="timetable-table" id="exam-table" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Course Code</th>
+                        <th>Course Name</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Room</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="exam-tbody">
+                    <!-- Rows will be injected via JavaScript -->
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    <!-- The Table -->
-    <table border="1" style="width: 100%; border-collapse: collapse; text-align: left;">
-        <thead>
-            <tr>
-                <th>Module</th>
-                <th>Date</th>
-                <th>Room</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody id="timetable-body">
-            <!-- JavaScript will insert rows here -->
-        </tbody>
-    </table>
-
-    <!-- Link to your JS -->
+    <!-- Fixed path: go up one level to 'frontend/', then into 'js/' -->
     <script src="../js/student.js"></script>
 </body>
 </html>

@@ -1,52 +1,78 @@
-// 1. Mock data (simulating what the backend will eventually give us)
-const mockExams = [
-    { module: "CS101", date: "2024-05-10", room: "Hall A", status: "confirmed" },
-    { module: "CS102", date: "2024-05-12", room: "Hall B", status: "clash" },
-    { module: "CS103", date: "2024-05-15", room: "TBC", status: "pending" }
-];
+document.addEventListener("DOMContentLoaded", () => {
+    // Extract student_no from the URL path, or default to "12345" for local testing
+    const pathSegments = window.location.pathname.split("/").filter(Boolean);
+    let studentNo = pathSegments[pathSegments.length - 1];
 
-// 2. STU-02: Helper function to create a status badge
+    // Fallback for local testing so it loads valid data instead of "timetable.html"
+    if (!studentNo || studentNo === "timetable.html" || studentNo === "student") {
+        studentNo = "12345"; // Change to "999" anytime to test the error state!
+    }
+
+    const studentIdDisplay = document.getElementById("student-id-display");
+    const errorBanner = document.getElementById("error-banner");
+    const errorMessage = document.getElementById("error-message");
+    const examTable = document.getElementById("exam-table");
+    const examTbody = document.getElementById("exam-tbody");
+
+    if (studentIdDisplay) {
+        studentIdDisplay.textContent = studentNo;
+    }
+
+    // Mock Database of student exams (Placeholder until backend API is plugged in)
+    const mockDatabase = {
+        "12345": [
+            { code: "BBT 2103", name: "Software Engineering", date: "2026-12-03", time: "09:00 AM", room: "MSB 2", status: "confirmed" },
+            { code: "ICS 1104", name: "Discrete Mathematics", date: "2026-12-05", time: "02:00 PM", room: "LH 1", status: "clash" }
+        ],
+        "67890": [
+            { code: "BBT 2102", name: "Advanced Database Systems", date: "2026-12-04", time: "09:00 AM", room: "Lab A", status: "confirmed" }
+        ]
+    };
+
+    // Validate student number and render data or error
+    if (studentNo && mockDatabase[studentNo]) {
+        if (errorBanner) errorBanner.style.display = "none";
+        if (examTable) examTable.style.display = "table";
+
+        const exams = mockDatabase[studentNo];
+        if (examTbody) {
+            examTbody.innerHTML = "";
+
+            exams.forEach(exam => {
+                const row = document.createElement("tr");
+                [exam.code, exam.name, exam.date, exam.time, exam.room].forEach(value => {
+                    const cell = document.createElement("td");
+                    cell.textContent = value;
+                    row.appendChild(cell);
+                });
+
+                const statusCell = document.createElement("td");
+                statusCell.appendChild(createStatusBadge(exam.status));
+                row.appendChild(statusCell);
+                examTbody.appendChild(row);
+            });
+        }
+    } else {
+        // Clean error state for invalid student number
+        if (examTable) examTable.style.display = "none";
+        if (errorBanner) errorBanner.style.display = "block";
+        if (errorMessage) {
+            errorMessage.textContent = `Error: Student number "${studentNo}" was not found in the system.`;
+        }
+    }
+});
+
 function createStatusBadge(status) {
     const normalised = (status || "pending").toLowerCase().trim();
     const config = {
         confirmed: { modifier: "badge-confirmed", label: "Confirmed" },
-        clash:     { modifier: "badge-clash",     label: "Clash Flagged" },
-        pending:   { modifier: "badge-pending",   label: "Pending" },
+        clash: { modifier: "badge-clash", label: "Clash Flagged" },
+        pending: { modifier: "badge-pending", label: "Pending" },
     };
 
     const { modifier, label } = config[normalised] || config.pending;
-
     const span = document.createElement("span");
     span.className = `badge ${modifier}`;
     span.textContent = label;
     return span;
 }
-
-// 3. Render the table
-const tbody = document.getElementById("timetable-body");
-
-mockExams.forEach(exam => {
-    const row = document.createElement("tr");
-
-    // Module column
-    const moduleCell = document.createElement("td");
-    moduleCell.textContent = exam.module;
-    row.appendChild(moduleCell);
-
-    // Date column
-    const dateCell = document.createElement("td");
-    dateCell.textContent = exam.date;
-    row.appendChild(dateCell);
-
-    // Room column
-    const roomCell = document.createElement("td");
-    roomCell.textContent = exam.room;
-    row.appendChild(roomCell);
-
-    // Status column (Hooking in the badge here!)
-    const statusCell = document.createElement("td");
-    statusCell.appendChild(createStatusBadge(exam.status));
-    row.appendChild(statusCell);
-
-    tbody.appendChild(row);
-});
