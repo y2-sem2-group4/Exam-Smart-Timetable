@@ -1,76 +1,104 @@
-document.addEventListener("DOMContentLoaded", () => {
-    // Extract student_no from the URL path, or default to "12345" for local testing
-    const pathSegments = window.location.pathname.split("/").filter(Boolean);
-    let studentNo = pathSegments[pathSegments.length - 1];
+const API_BASE_URL = window.API_BASE_URL || "http://localhost:8000";
 
-    // Fallback for local testing so it loads valid data instead of "timetable.html"
-    if (!studentNo || studentNo === "timetable.html" || studentNo === "student") {
-        studentNo = "12345"; // Change to "999" anytime to test the error state!
-    }
-
+document.addEventListener("DOMContentLoaded", async () => {
+    const studentNo = new URLSearchParams(window.location.search).get("student_no");
     const studentIdDisplay = document.getElementById("student-id-display");
     const errorBanner = document.getElementById("error-banner");
     const errorMessage = document.getElementById("error-message");
+    const loadingState = document.getElementById("loading-state");
+    const emptyState = document.getElementById("empty-state");
     const examTable = document.getElementById("exam-table");
     const examTbody = document.getElementById("exam-tbody");
 
     if (studentIdDisplay) {
-        studentIdDisplay.textContent = studentNo;
+        studentIdDisplay.textContent = studentNo || "unknown";
     }
 
-    // Mock Database of student exams (Placeholder until backend API is plugged in)
-    const mockDatabase = {
-        "12345": [
-            { code: "BBT 2103", name: "Software Engineering", date: "2026-12-03", time: "09:00 AM", room: "MSB 2", status: "confirmed" },
-            { code: "ICS 1104", name: "Discrete Mathematics", date: "2026-12-05", time: "02:00 PM", room: "LH 1", status: "clash" }
-        ],
-        "67890": [
-            { code: "BBT 2102", name: "Advanced Database Systems", date: "2026-12-04", time: "09:00 AM", room: "Lab A", status: "confirmed" }
-        ]
-    };
+    if (!studentNo) {
+        showError("Enter a student number to view a timetable.");
+        return;
+    }
 
-    // Validate student number and render data or error
-    if (studentNo && mockDatabase[studentNo]) {
+    try {
+        const response = await fetch(
+            `${API_BASE_URL}/api/timetable/${encodeURIComponent(studentNo)}/`
+        );
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || "Unable to load timetable.");
+        }
+
+        renderTimetable(data.exams || []);
+    } catch (error) {
+        showError(error.message || "Unable to load timetable. Please try again.");
+    }
+
+    function renderTimetable(exams) {
+        if (loadingState) loadingState.style.display = "none";
         if (errorBanner) errorBanner.style.display = "none";
+
+        if (!exams.length) {
+            if (emptyState) emptyState.style.display = "block";
+            if (examTable) examTable.style.display = "none";
+            return;
+        }
+
+        if (emptyState) emptyState.style.display = "none";
         if (examTable) examTable.style.display = "table";
+        if (!examTbody) return;
 
-        const exams = mockDatabase[studentNo];
-        if (examTbody) {
-            examTbody.innerHTML = "";
-
-            exams.forEach(exam => {
-                const row = document.createElement("tr");
-                [exam.code, exam.name, exam.date, exam.time, exam.room].forEach(value => {
-                    const cell = document.createElement("td");
-                    cell.textContent = value;
-                    row.appendChild(cell);
-                });
-
-                const statusCell = document.createElement("td");
-                statusCell.appendChild(createStatusBadge(exam.status));
-                row.appendChild(statusCell);
-                examTbody.appendChild(row);
+        examTbody.replaceChildren();
+        exams.forEach(exam => {
+            const row = document.createElement("tr");
+            [
+                exam.unit_code || "TBC",
+                exam.unit_name || "TBC",
+                exam.exam_date || "TBC",
+                formatTimeRange(exam.start_time, exam.end_time),
+                exam.room_name || "TBC",
+            ].forEach(value => {
+                const cell = document.createElement("td");
+                cell.textContent = value;
+                row.appendChild(cell);
             });
-        }
-    } else {
-        // Clean error state for invalid student number
+
+            const statusCell = document.createElement("td");
+            statusCell.appendChild(createStatusBadge(exam.status, exam.clash_reason));
+            row.appendChild(statusCell);
+            examTbody.appendChild(row);
+        });
+    }
+
+    function showError(message) {
+        if (loadingState) loadingState.style.display = "none";
         if (examTable) examTable.style.display = "none";
+        if (emptyState) emptyState.style.display = "none";
         if (errorBanner) errorBanner.style.display = "block";
-        if (errorMessage) {
-            errorMessage.textContent = `Error: Student number "${studentNo}" was not found in the system.`;
-        }
+        if (errorMessage) errorMessage.textContent = message;
     }
 });
 
-function createStatusBadge(status) {
-    const normalised = (status || "pending").toLowerCase().trim();
+function formatTimeRange(startTime, endTime) {
+    if (!startTime || !endTime) return "TBC";
+    return `${startTime.slice(0, 5)} - ${endTime.slice(0, 5)}`;
+}
+
+function createStatusBadge(status, clashReason) {
+    const normalised = (status || "").toLowerCase().trim();
+    const hasClash = Boolean(clashReason) || normalised === "pending_review";
     const config = {
         confirmed: { modifier: "badge-confirmed", label: "Confirmed" },
         clash: { modifier: "badge-clash", label: "Clash Flagged" },
         pending: { modifier: "badge-pending", label: "Pending" },
     };
 
-    const { modifier, label } = config[normalised] || config.pending;
+    const badgeStatus = hasClash
+        ? "clash"
+        : normalised === "scheduled" || normalised === "resolved"
+            ? "confirmed"
+            : "pending";
+    const { modifier, label } = config[badgeStatus];
     const span = document.createElement("span");
     span.className = `badge ${modifier}`;
     span.textContent = label;

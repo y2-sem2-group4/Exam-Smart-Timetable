@@ -99,10 +99,58 @@ Frontend runs at `http://localhost:5500`.
 
 | Endpoint | Method | Returns | Status |
 |---|---|---|---|
-| `/api/exams/` | GET | List of all exams | TBD |
-| `/api/exams/` | POST | Create new exam (admin only) | TBD |
+| `/api/exams/` | GET | List of all exams | 200 |
+| `/api/exams/` | POST | Create new exam (admin only) | 201 / 403 |
 | `/api/exams/<id>/` | PUT | Update/reassign exam (admin only) | TBD |
-| `/api/timetable/<student_no>/` | GET | One student's exams | TBD |
+| `/api/timetable/<student_no>/` | GET | One student's enrolled exams | 200 / 404 / 500 |
+
+The student timetable endpoint is public and read-only. Unknown admission numbers
+return `404 Not Found`; mutation methods return `405 Method Not Allowed`. A successful
+response has this shape:
+
+```json
+{
+  "admission_number": "ST001",
+  "exams": [
+    {
+      "unit_code": "MAT101",
+      "unit_name": "Maths",
+      "room_name": "Room A",
+      "exam_date": "2026-12-01",
+      "start_time": "09:00:00",
+      "end_time": "11:00:00",
+      "status": "scheduled",
+      "clash_reason": null
+    }
+  ]
+}
+```
+
+Backend statuses are `scheduled`, `pending_review`, and `resolved`. The student
+client maps `scheduled` and `resolved` to **Confirmed**, `pending_review` or any
+non-empty `clash_reason` to **Clash Flagged**, and unknown statuses to **Pending**.
+An unassigned room is returned as `null`; the student client displays it as `TBC`.
+
+### Connecting the clients
+
+Start the backend from `backend/`:
+
+```bash
+python manage.py runserver
+```
+
+Start the frontend from `frontend/`:
+
+```bash
+python -m http.server 5500
+```
+
+Open the student page with the admission number in the query string:
+`http://localhost:5500/student/timetable.html?student_no=ST001`.
+`frontend/js/student.js` calls `http://localhost:8000/api/timetable/ST001/`.
+If the backend uses another host or port, set `window.API_BASE_URL` before
+loading `student.js`. The backend accepts JSON admin requests at
+`/api/exams/`; POST requests require an authenticated staff user.
 
 Backend team: update this table as each endpoint goes live, so frontend isn't guessing.
 
