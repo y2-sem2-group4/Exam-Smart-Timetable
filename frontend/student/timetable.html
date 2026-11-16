@@ -10,7 +10,7 @@
 <body>
     <div class="container">
         <h1>Student Exam Timetable</h1>
-        
+
         <!-- Error Banner (Hidden by default) -->
         <div id="error-banner" class="error-banner" style="display: none;">
             <p id="error-message">Student number not found. Please check and try again.</p>
@@ -19,6 +19,11 @@
         <!-- Timetable Content -->
         <div id="timetable-container">
             <p>Loading timetable for Student ID: <span id="student-id-display"></span>...</p>
+            <div class="badge-legend" style="margin-bottom: 20px;">
+                <span class="badge badge-confirmed">Confirmed</span>
+                <span class="badge badge-clash">Clash Flagged</span>
+                <span class="badge badge-pending">Pending</span>
+            </div>
             <table class="timetable-table" id="exam-table" style="display: none;">
                 <thead>
                     <tr>

@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Extract student_no from the URL path, or default to "12345" for local testing
     const pathSegments = window.location.pathname.split("/").filter(Boolean);
     let studentNo = pathSegments[pathSegments.length - 1];
-    
+
     // Fallback for local testing so it loads valid data instead of "timetable.html"
     if (!studentNo || studentNo === "timetable.html" || studentNo === "student") {
         studentNo = "12345"; // Change to "999" anytime to test the error state!
@@ -33,21 +33,22 @@ document.addEventListener("DOMContentLoaded", () => {
     if (studentNo && mockDatabase[studentNo]) {
         if (errorBanner) errorBanner.style.display = "none";
         if (examTable) examTable.style.display = "table";
-        
+
         const exams = mockDatabase[studentNo];
         if (examTbody) {
             examTbody.innerHTML = "";
 
             exams.forEach(exam => {
                 const row = document.createElement("tr");
-                row.innerHTML = `
-                    <td>${exam.code}</td>
-                    <td>${exam.name}</td>
-                    <td>${exam.date}</td>
-                    <td>${exam.time}</td>
-                    <td>${exam.room}</td>
-                    <td><span class="badge badge-${exam.status}">${exam.status}</span></td>
-                `;
+                [exam.code, exam.name, exam.date, exam.time, exam.room].forEach(value => {
+                    const cell = document.createElement("td");
+                    cell.textContent = value;
+                    row.appendChild(cell);
+                });
+
+                const statusCell = document.createElement("td");
+                statusCell.appendChild(createStatusBadge(exam.status));
+                row.appendChild(statusCell);
                 examTbody.appendChild(row);
             });
         }
@@ -60,3 +61,18 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 });
+
+function createStatusBadge(status) {
+    const normalised = (status || "pending").toLowerCase().trim();
+    const config = {
+        confirmed: { modifier: "badge-confirmed", label: "Confirmed" },
+        clash: { modifier: "badge-clash", label: "Clash Flagged" },
+        pending: { modifier: "badge-pending", label: "Pending" },
+    };
+
+    const { modifier, label } = config[normalised] || config.pending;
+    const span = document.createElement("span");
+    span.className = `badge ${modifier}`;
+    span.textContent = label;
+    return span;
+}
