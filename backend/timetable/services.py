@@ -61,4 +61,5 @@ def check_and_flag_exam_clashes(exam):
             exam.clash_reason = None # Clear the reason
 
     exam.save() # Saves the updated status and updated_at timestamp (FR-10)
+    
     return clash_detected
