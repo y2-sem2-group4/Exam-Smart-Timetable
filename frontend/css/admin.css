@@ -1,0 +1,44 @@
+* { box-sizing: border-box; }
+body { font-family: system-ui, sans-serif; margin: 0; background: #f4f6f8; color: #222; }
+
+/* Navigation bar */
+nav { background: #1f3a5f; padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+nav a, nav button { color: #fff; text-decoration: none; background: none; border: 0; font: inherit; cursor: pointer; }
+nav .brand { font-weight: 700; margin-right: auto; }
+
+/* Layout */
+main { max-width: 960px; margin: 0 auto; padding: 16px; }
+h1 { margin-top: 0; }
+.card { background: #fff; border-radius: 8px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.stats a { text-decoration: none; color: inherit; }
+.stats strong { display: block; font-size: 1.8rem; }
+.row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; align-items: end; }
+form.inline { display: inline; }
+
+/* Table (scrolls sideways on phones) */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; background: #fff; }
+th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #e3e7ea; white-space: nowrap; }
+
+/* Status badges (FR-08) */
+.badge { padding: 2px 10px; border-radius: 12px; font-size: .8rem; color: #fff; }
+.badge.scheduled { background: #2e7d32; }
+.badge.pending_review { background: #c62828; }
+.badge.resolved { background: #1565c0; }
+
+/* Buttons */
+.btn { display: inline-block; padding: 7px 14px; border: 0; border-radius: 6px; background: #1f3a5f; color: #fff; text-decoration: none; cursor: pointer; font: inherit; }
+.btn.danger { background: #c62828; }
+.btn.light { background: #e3e7ea; color: #222; }
+
+/* Forms */
+label { display: block; margin: 12px 0 4px; font-weight: 600; }
+input, select { width: 100%; padding: 8px; border: 1px solid #b8c0c8; border-radius: 6px; font: inherit; }
+.errorlist { color: #c62828; list-style: none; padding: 0; margin: 4px 0; font-size: .9rem; }
+
+/* Messages */
+.msg { padding: 10px 14px; border-radius: 6px; margin-bottom: 12px; }
+.msg.success { background: #e8f5e9; }
+.msg.warning { background: #fff3e0; }
+.msg.error { background: #ffebee; }
