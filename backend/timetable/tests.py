@@ -85,6 +85,46 @@ class ApiContractTests(TestCase):
         data = response.json()
         self.assertEqual(data['admission_number'], 'ST001')
         self.assertEqual(len(data['exams']), 1)
+        self.assertEqual(
+            data['exams'][0],
+            {
+                'unit_code': 'MAT101',
+                'unit_name': 'Maths',
+                'room_name': 'Room A',
+                'exam_date': '2026-12-01',
+                'start_time': '09:00:00',
+                'end_time': '11:00:00',
+                'status': ExamStatus.SCHEDULED,
+                'clash_reason': None,
+            },
+        )
+
+    def test_student_timetable_returns_empty_schedule(self):
+        Enrolment.objects.all().delete()
+
+        response = self.client.get(reverse('student-timetable', args=['ST001']))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {'admission_number': 'ST001', 'exams': []})
+
+    def test_student_timetable_returns_status_and_clash_data(self):
+        second_unit = Unit.objects.create(unit_code="PHY101", unit_name="Physics")
+        Enrolment.objects.create(student=self.student, unit=second_unit)
+        Exam.objects.create(
+            unit=second_unit,
+            exam_date=date(2026, 12, 2),
+            start_time=time(9, 0),
+            end_time=time(11, 0),
+            status=ExamStatus.PENDING_REVIEW,
+            clash_reason="Overlaps with another enrolled exam",
+        )
+
+        response = self.client.get(reverse('student-timetable', args=['ST001']))
+
+        self.assertEqual(response.status_code, 200)
+        clash_exam = response.json()['exams'][1]
+        self.assertEqual(clash_exam['status'], ExamStatus.PENDING_REVIEW)
+        self.assertEqual(clash_exam['clash_reason'], "Overlaps with another enrolled exam")
 
     def test_unknown_student_returns_404(self):
         response = self.client.get(reverse('student-timetable', args=['UNKNOWN']))
