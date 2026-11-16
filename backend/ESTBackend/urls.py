@@ -16,14 +16,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from django.views.generic import RedirectView
-from django.views.static import serve
-
-from .settings import FRONTEND_DIR
 
 urlpatterns = [
-    path("", RedirectView.as_view(url="/frontend/admin/login.html", permanent=False)),
     path("admin/", admin.site.urls),
     path("api/", include("timetable.urls")),
-    path("frontend/<path:path>", serve, {"document_root": FRONTEND_DIR}),
 ]

@@ -82,22 +82,7 @@ Backend runs at `http://localhost:8000`.
 
 ### Frontend
 
-No build step — it's plain HTML/CSS/JS. Django serves the frontend during local
-development, so after starting the backend open:
-
-`http://localhost:8000/`
-
-This redirects to the admin login page. The other admin pages require the
-successful demo login (`admin` / `admin123`) and will redirect back to
-`login.html` when no admin session exists. The student timetable does not
-require login:
-
-`http://localhost:8000/frontend/student/timetable.html?student_no=ST001`
-
-The frontend is mounted at `/frontend/`; Django's built-in admin remains at
-`/admin/`. There is no need to run Live Server as well.
-
-Alternatively, to run the frontend independently:
+No build step — it's plain HTML/CSS/JS. Open the relevant `.html` file directly in your browser, or run a simple local server:
 
 ```bash
 cd frontend
