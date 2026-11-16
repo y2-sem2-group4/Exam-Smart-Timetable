@@ -33,7 +33,7 @@ const MOCK_SEED = [
 
 function mockLoad() {
   const saved = localStorage.getItem("est_exams");
-  return saved ? JSON.parse(saved) : structuredClone(MOCK_SEED);
+  return saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(MOCK_SEED));
 }
 function mockSave(exams) {
   localStorage.setItem("est_exams", JSON.stringify(exams));
@@ -304,6 +304,7 @@ async function initExamForm() {
       if (result.clash) {
         $("clash-text").textContent = result.clash_reason || "See Clash Review for details.";
         $("clash-banner").classList.remove("hidden");
+        e.target.querySelector("button[type=submit]").disabled = true; // stops a duplicate exam on re-click
       } else {
         window.location.href = "dashboard.html";
       }
