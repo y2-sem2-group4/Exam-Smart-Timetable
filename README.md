@@ -89,8 +89,12 @@ python manage.py seed_demo
 python manage.py createsuperuser
 ```
 
-After logging in at `/frontend/admin/login.html`, use **Find student** on the
-dashboard to enter an admission number and open that student's live timetable.
+The Django superuser/admin page is available at `/admin/`; authenticated
+administrators can also open it through **Manage admins** in the admin
+navigation. The application's
+custom administrator portal login is available at `/frontend/admin/login.html`;
+after logging in there, use **Find student** on the dashboard to enter an
+admission number and open that student's live timetable.
 The student portal remains available without login from the landing page.
 
 ### Frontend
