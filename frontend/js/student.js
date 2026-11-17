@@ -1,7 +1,8 @@
-const API_BASE_URL = window.API_BASE_URL || "http://localhost:8000";
+const API_BASE_URL = window.API_BASE_URL || "";
 
-document.addEventListener("DOMContentLoaded", async () => {
-    const studentNo = new URLSearchParams(window.location.search).get("student_no");
+document.addEventListener("DOMContentLoaded", () => {
+    const searchForm = document.getElementById("student-search-form");
+    const searchInput = document.getElementById("student-search-input");
     const studentIdDisplay = document.getElementById("student-id-display");
     const errorBanner = document.getElementById("error-banner");
     const errorMessage = document.getElementById("error-message");
@@ -10,28 +11,37 @@ document.addEventListener("DOMContentLoaded", async () => {
     const examTable = document.getElementById("exam-table");
     const examTbody = document.getElementById("exam-tbody");
 
-    if (studentIdDisplay) {
-        studentIdDisplay.textContent = studentNo || "unknown";
-    }
+    const initialStudentNo = new URLSearchParams(window.location.search).get("student_no") || "";
+    if (searchInput) searchInput.value = initialStudentNo;
+    if (initialStudentNo) loadTimetable(initialStudentNo);
+    else showError("Enter a student number to view a timetable.");
 
-    if (!studentNo) {
-        showError("Enter a student number to view a timetable.");
-        return;
-    }
-
-    try {
-        const response = await fetch(
-            `${API_BASE_URL}/api/timetable/${encodeURIComponent(studentNo)}/`
-        );
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.error || "Unable to load timetable.");
+    searchForm?.addEventListener("submit", event => {
+        event.preventDefault();
+        const studentNo = searchInput.value.trim();
+        if (studentNo) {
+            window.history.replaceState({}, "", `?student_no=${encodeURIComponent(studentNo)}`);
+            loadTimetable(studentNo);
         }
+    });
 
-        renderTimetable(data.exams || []);
-    } catch (error) {
-        showError(error.message || "Unable to load timetable. Please try again.");
+    async function loadTimetable(studentNo) {
+        if (studentIdDisplay) studentIdDisplay.textContent = studentNo;
+        if (loadingState) {
+            loadingState.textContent = `Loading timetable for Student ID: ${studentNo}...`;
+            loadingState.style.display = "block";
+        }
+        try {
+            const response = await fetch(
+                `${API_BASE_URL}/api/timetable/${encodeURIComponent(studentNo)}/`
+            );
+            const data = await response.json().catch(() => ({}));
+            if (response.status === 404) throw new Error("Admission number not found");
+            if (!response.ok) throw new Error(data.error || "Unable to load timetable.");
+            renderTimetable(data.exams || []);
+        } catch (error) {
+            showError(error.message || "Unable to load timetable. Please try again.");
+        }
     }
 
     function renderTimetable(exams) {
@@ -86,19 +96,13 @@ function formatTimeRange(startTime, endTime) {
 
 function createStatusBadge(status, clashReason) {
     const normalised = (status || "").toLowerCase().trim();
-    const hasClash = Boolean(clashReason) || normalised === "pending_review";
     const config = {
-        confirmed: { modifier: "badge-confirmed", label: "Confirmed" },
-        clash: { modifier: "badge-clash", label: "Clash Flagged" },
-        pending: { modifier: "badge-pending", label: "Pending" },
+        scheduled: { modifier: "badge-scheduled", label: "Scheduled" },
+        pending_review: { modifier: "badge-pending_review", label: "Clash Flagged" },
+        resolved: { modifier: "badge-resolved", label: "Resolved" },
     };
-
-    const badgeStatus = hasClash
-        ? "clash"
-        : normalised === "scheduled" || normalised === "resolved"
-            ? "confirmed"
-            : "pending";
-    const { modifier, label } = config[badgeStatus];
+    const fallback = Boolean(clashReason) ? "pending_review" : "scheduled";
+    const { modifier, label } = config[normalised] || config[fallback];
     const span = document.createElement("span");
     span.className = `badge ${modifier}`;
     span.textContent = label;

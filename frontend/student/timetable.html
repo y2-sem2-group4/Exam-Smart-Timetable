@@ -10,6 +10,12 @@
 <body>
     <div class="container">
         <h1>Student Exam Timetable</h1>
+        <form id="student-search-form" class="student-search">
+            <label for="student-search-input">Admission number</label>
+            <input id="student-search-input" type="text"
+                placeholder="Enter Admission Number e.g. 220965" required>
+            <button class="btn" type="submit">Search</button>
+        </form>
 
         <!-- Error Banner (Hidden by default) -->
         <div id="error-banner" class="error-banner" style="display: none;">
@@ -19,7 +25,7 @@
         <!-- Timetable Content -->
         <div id="timetable-container">
             <p id="loading-state">Loading timetable for Student ID: <span id="student-id-display"></span>...</p>
-            <p id="empty-state" style="display: none;">No exams are currently scheduled for this student.</p>
+            <p id="empty-state" style="display: none;">No exams scheduled</p>
             <div class="badge-legend" style="margin-bottom: 20px;">
                 <span class="badge badge-confirmed">Confirmed</span>
                 <span class="badge badge-clash">Clash Flagged</span>
