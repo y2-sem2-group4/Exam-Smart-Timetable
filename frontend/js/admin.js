@@ -196,6 +196,7 @@ function requireLoginAndNav(active) {
     return false;
   }
   ensureToastRegion();
+  $("nav").className = "admin-nav";
   const current = name => (active === name ? ' class="active" aria-current="page"' : "");
   $("nav").innerHTML = `
     <span class="brand">Exam Smart Timetable \u00B7 Admin</span>
@@ -238,6 +239,7 @@ async function initDashboard() {
   const tbody = $("exam-tbody");
   const filter = $("status-filter");
   const search = $("unit-search");
+  const studentLookup = $("student-lookup-form");
   let exams = [];
 
   const byDate = (a, b) =>
@@ -291,6 +293,13 @@ async function initDashboard() {
   }
   filter.addEventListener("change", render);
   search.addEventListener("input", render);
+  studentLookup.addEventListener("submit", event => {
+    event.preventDefault();
+    const admissionNumber = $("student-lookup-input").value.trim();
+    if (!admissionNumber) return;
+    window.location.href =
+      `../student/timetable.html?student_no=${encodeURIComponent(admissionNumber)}`;
+  });
 }
 
 /* ---------- Log / edit exam ---------- */

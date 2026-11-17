@@ -80,6 +80,19 @@ python manage.py runserver
 
 Backend runs at `http://localhost:8000`.
 
+### Demo walkthrough
+
+Load repeatable demo data and create a local administrator account:
+
+```bash
+python manage.py seed_demo
+python manage.py createsuperuser
+```
+
+After logging in at `/frontend/admin/login.html`, use **Find student** on the
+dashboard to enter an admission number and open that student's live timetable.
+The student portal remains available without login from the landing page.
+
 ### Frontend
 
 No build step — it's plain HTML/CSS/JS. Django serves the frontend during local

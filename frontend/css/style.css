@@ -8,7 +8,7 @@
 :root {
   --primary: #1f3a5f;
   --primary-hover: #162d4b;
-  --bg: #f4f6f8;
+  --bg: #eef3f8;
   --surface: #ffffff;
   --text: #1b2430;
   --muted: #4f5b69;          /* 6:1 on white, 5.5:1 on --bg */
@@ -34,7 +34,9 @@ body {
   font-family: var(--font);
   font-size: 1rem;
   line-height: 1.5;
-  background: var(--bg);
+  background:
+    radial-gradient(circle at top right, rgba(31, 58, 95, 0.08), transparent 34rem),
+    var(--bg);
   color: var(--text);
 }
 
@@ -44,6 +46,10 @@ h2 { font-size: 1.25rem; }
 h3 { font-size: 1.1rem; }
 
 a { color: var(--primary); }
+
+button,
+input,
+select { -webkit-tap-highlight-color: transparent; }
 
 :focus-visible {
   outline: 3px solid var(--focus);
@@ -184,6 +190,40 @@ input, select {
   padding: var(--space-4) var(--space-2);
 }
 
+.brand-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: var(--primary);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+}
+
+.brand-mark {
+  display: inline-grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  border-radius: 0.7rem;
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.85rem;
+  letter-spacing: 0;
+}
+
+.landing-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+.landing-topbar a {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
 .landing-hero { margin-bottom: var(--space-4); text-align: center; }
 .landing-hero h1 { margin: 0.5rem 0; font-size: clamp(2rem, 5vw, 3.2rem); }
 .landing-hero p { color: var(--muted); }
@@ -196,19 +236,35 @@ input, select {
 }
 
 .portal-card {
+  display: flex;
+  flex-direction: column;
   padding: var(--space-3);
   background: var(--surface);
   border-radius: 10px;
-  box-shadow: var(--shadow);
+  border: 1px solid rgba(123, 135, 148, 0.18);
+  box-shadow: 0 12px 30px rgba(31, 58, 95, 0.08);
 }
 .portal-card h2 { margin-top: 0; }
 .portal-card p { margin-top: 0; color: var(--muted); }
+.portal-card form { margin-top: auto; }
 .portal-card .btn { width: 100%; margin-top: var(--space-2); }
 
 /* =====================================================================
    Student timetable page
    ===================================================================== */
 .container { max-width: 960px; margin: 0 auto; padding: var(--space-3) var(--space-2) var(--space-4); }
+
+.student-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.student-header h1 { margin-bottom: 0.25rem; }
+.student-header p { margin: 0; color: var(--muted); }
+.student-header .brand-lockup { margin-bottom: var(--space-2); }
 
 .student-search {
   display: flex;
@@ -284,6 +340,7 @@ input, select {
 
 .timetable-table tr.is-next td { background: #eef4fb; }
 .timetable-table tr.is-past td { background: #f1f3f5; color: var(--muted); }
+.timetable-table tr.is-past .badge { opacity: 0.8; }
 
 /* Wide screens: keep short values (code, date, time, room) on one line */
 @media (min-width: 641px) {
@@ -298,6 +355,7 @@ input, select {
 @media (max-width: 640px) {
   h1 { font-size: 1.5rem; }
   .container { padding-left: 0.75rem; padding-right: 0.75rem; }
+  .student-header { display: block; }
   .student-search .field { max-width: none; flex-basis: 100%; }
   .student-search .btn { width: 100%; }
 

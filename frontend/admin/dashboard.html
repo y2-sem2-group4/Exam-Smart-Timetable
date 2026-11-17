@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard | Exam Smart Timetable</title>
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/admin.css">
 </head>
@@ -25,6 +26,14 @@
         <label for="unit-search">Search unit</label>
         <input id="unit-search" type="search" placeholder="Code or name" autocomplete="off">
       </div>
+      <form id="student-lookup-form" class="student-lookup">
+        <div class="control">
+          <label for="student-lookup-input">Find student</label>
+          <input id="student-lookup-input" type="search"
+            placeholder="Admission number e.g. 220965" autocomplete="off" required>
+        </div>
+        <button class="btn light" type="submit">View timetable</button>
+      </form>
       <a class="btn light spacer" href="clash.html">Clash review <span id="clash-count" class="count">0</span></a>
       <a class="btn" href="exam-form.html">+ Log exam</a>
     </div>
