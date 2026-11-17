@@ -1,4 +1,4 @@
-name: Django CI
+name: Django CI/CD
 
 on:
   push:
@@ -31,8 +31,18 @@ jobs:
       - name: Run Django checks and unit tests
         working-directory: backend
         env:
-          DJANGO_SECRET_KEY: ci-test-secret-key
+          DJANGO_SECRET_KEY: a0NKo8dHW6mwPxnYB9uy-YQjVfmsmNQxZyR4dwqWO_-LKgWtbU9aKOOmEE6fd0N-1Nc
           DJANGO_DEBUG: "true"
         run: |
           python manage.py check
           python manage.py test
+
+  deploy:
+    name: Trigger Render Deploy
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Call Render Deploy Hook
+        run: curl -f -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
