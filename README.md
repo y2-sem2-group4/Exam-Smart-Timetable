@@ -87,10 +87,9 @@ development, so after starting the backend open:
 
 `http://localhost:8000/`
 
-This redirects to the admin login page. The other admin pages require the
-successful demo login (`admin` / `admin123`) and will redirect back to
-`login.html` when no admin session exists. The student timetable does not
-require login:
+The homepage links to the student and administrator portals. The admin pages
+require a successful staff login and redirect back to `login.html` when no
+admin session exists. The student timetable does not require login:
 
 `http://localhost:8000/frontend/student/timetable.html?student_no=ST001`
 
@@ -134,11 +133,9 @@ After deployment, open:
 https://<your-render-service>.onrender.com/frontend/student/timetable.html?student_no=ST001
 ```
 
-The root URL redirects to the admin login page. The current admin JavaScript
-is still configured with `USE_MOCK = true`, and the backend does not yet
-provide the login, units, or rooms endpoints used by the non-mock dashboard.
-The student timetable/API deployment is ready; switch the dashboard to
-non-mock mode only after those endpoints are implemented.
+The root URL serves the landing homepage. The admin dashboard uses the live
+login, units, rooms, exams, and reassign endpoints; create a Django staff user
+before logging in. The student timetable/API is public and read-only.
 
 For a custom domain, add it to `ALLOWED_HOSTS` and
 `CSRF_TRUSTED_ORIGINS` in Render (for example,
@@ -155,7 +152,11 @@ For a custom domain, add it to `ALLOWED_HOSTS` and
 |---|---|---|---|
 | `/api/exams/` | GET | List of all exams | 200 |
 | `/api/exams/` | POST | Create new exam (admin only) | 201 / 403 |
-| `/api/exams/<id>/` | PUT | Update/reassign exam (admin only) | TBD |
+| `/api/exams/?status=pending_review` | GET | Filter exams by status | 200 |
+| `/api/exams/<id>/reassign/` | PATCH | Reassign exam (admin only) | 200 / 403 |
+| `/api/units/` | GET | List units for admin forms | 200 |
+| `/api/rooms/` | GET | List rooms for admin forms | 200 |
+| `/api/admin/login/` | POST | Start an admin session | 200 / 401 |
 | `/api/timetable/<student_no>/` | GET | One student's enrolled exams | 200 / 404 / 500 |
 
 The student timetable endpoint is public and read-only. Unknown admission numbers
@@ -201,8 +202,8 @@ python -m http.server 5500
 
 Open the student page with the admission number in the query string:
 `http://localhost:5500/student/timetable.html?student_no=ST001`.
-`frontend/js/student.js` calls `http://localhost:8000/api/timetable/ST001/`.
-If the backend uses another host or port, set `window.API_BASE_URL` before
+`frontend/js/student.js` calls `/api/timetable/ST001/` when served by Django.
+If the frontend runs on another host or port, set `window.API_BASE_URL` before
 loading `student.js`. The backend accepts JSON admin requests at
 `/api/exams/`; POST requests require an authenticated staff user.
 

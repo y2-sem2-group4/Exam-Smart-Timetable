@@ -153,3 +153,61 @@ class ApiContractTests(TestCase):
         }
         response = self.client.post(reverse('exam-list'), data=json.dumps(payload), content_type="application/json")
         self.assertEqual(response.status_code, 201)
+
+    def test_units_and_rooms_are_available(self):
+        units = self.client.get(reverse('unit-list'))
+        rooms = self.client.get(reverse('room-list'))
+
+        self.assertEqual(units.status_code, 200)
+        self.assertEqual(units.json()['units'], [{
+            'id': self.unit.id,
+            'unit_code': 'MAT101',
+            'unit_name': 'Maths',
+        }])
+        self.assertEqual(rooms.status_code, 200)
+        self.assertEqual(rooms.json()['rooms'], [{
+            'id': self.room.id,
+            'room_name': 'Room A',
+            'capacity': 50,
+        }])
+
+    def test_exam_list_supports_status_filter(self):
+        self.exam.status = ExamStatus.PENDING_REVIEW
+        self.exam.save()
+
+        response = self.client.get(reverse('exam-list') + '?status=pending_review')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()['exams']), 1)
+        self.assertEqual(response.json()['exams'][0]['status'], ExamStatus.PENDING_REVIEW)
+
+    def test_staff_can_reassign_exam_and_resolve_it(self):
+        new_room = Room.objects.create(room_name="Room B", capacity=100)
+        self.client.login(username="admin", password="pw")
+
+        response = self.client.patch(
+            reverse('exam-reassign', args=[self.exam.id]),
+            data=json.dumps({
+                'room_id': new_room.id,
+                'exam_date': '2026-12-03',
+                'start_time': '12:00:00',
+                'end_time': '14:00:00',
+            }),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['status'], ExamStatus.RESOLVED)
+        self.exam.refresh_from_db()
+        self.assertEqual(self.exam.room_id, new_room.id)
+        self.assertEqual(str(self.exam.exam_date), '2026-12-03')
+
+    def test_staff_login_endpoint_authenticates_staff(self):
+        response = self.client.post(
+            reverse('admin-login'),
+            data=json.dumps({'username': 'admin', 'password': 'pw'}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()['message'])

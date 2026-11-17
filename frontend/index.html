@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Smart Timetable</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="landing-page">
+    <main class="landing-container">
+        <header class="landing-hero">
+            <p class="eyebrow">Exam management made simple</p>
+            <h1>Exam Smart Timetable</h1>
+            <p>Find your exam schedule quickly or manage the university timetable from one place.</p>
+        </header>
+
+        <section class="portal-grid" aria-label="Portals">
+            <article class="portal-card">
+                <h2>Student Portal</h2>
+                <p>Enter your admission number to view your read-only exam timetable.</p>
+                <form id="student-search-form">
+                    <label for="admission-number">Admission number</label>
+                    <input id="admission-number" name="student_no" type="text"
+                        placeholder="Enter Admission Number e.g. 220965" required>
+                    <button class="btn" type="submit">View Timetable</button>
+                </form>
+            </article>
+            <article class="portal-card">
+                <h2>Administrator Portal</h2>
+                <p>Log in to record exams, review clashes, and manage room assignments.</p>
+                <a class="btn" href="/frontend/admin/login.html">Admin Login</a>
+            </article>
+        </section>
+    </main>
+    <script>
+        document.getElementById("student-search-form").addEventListener("submit", event => {
+            event.preventDefault();
+            const admissionNumber = document.getElementById("admission-number").value.trim();
+            if (admissionNumber) {
+                window.location.href = `/frontend/student/timetable.html?student_no=${encodeURIComponent(admissionNumber)}`;
+            }
+        });
+    </script>
+</body>
+</html>
