@@ -31,7 +31,7 @@ jobs:
       - name: Run Django checks and unit tests
         working-directory: backend
         env:
-          DJANGO_SECRET_KEY: a0NKo8dHW6mwPxnYB9uy-YQjVfmsmNQxZyR4dwqWO_-LKgWtbU9aKOOmEE6fd0N-1Nc
+          DJANGO_SECRET_KEY: ci-test-secret-key
           DJANGO_DEBUG: "true"
         run: |
           python manage.py check
