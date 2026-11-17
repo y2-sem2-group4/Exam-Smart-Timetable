@@ -4,52 +4,67 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Exam Timetable</title>
-    <!-- Fixed path: go up one level to 'frontend/', then into 'css/' -->
     <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Student Exam Timetable</h1>
+    <main class="container">
+        <h1>Student exam timetable</h1>
+
         <form id="student-search-form" class="student-search">
-            <label for="student-search-input">Admission number</label>
-            <input id="student-search-input" type="text"
-                placeholder="Enter Admission Number e.g. 220965" required>
-            <button class="btn" type="submit">Search</button>
+            <div class="field">
+                <label for="student-search-input">Admission number</label>
+                <input id="student-search-input" type="text" autocomplete="off" spellcheck="false"
+                    placeholder="e.g. 220965" required>
+            </div>
+            <button id="search-btn" class="btn" type="submit">Search</button>
         </form>
 
-        <!-- Error Banner (Hidden by default) -->
-        <div id="error-banner" class="error-banner" style="display: none;">
-            <p id="error-message">Student number not found. Please check and try again.</p>
+        <!-- Error banner: announced immediately by screen readers -->
+        <div id="error-banner" class="error-banner hidden" role="alert">
+            <p id="error-message"></p>
         </div>
 
-        <!-- Timetable Content -->
-        <div id="timetable-container">
-            <p id="loading-state">Loading timetable for Student ID: <span id="student-id-display"></span>...</p>
-            <p id="empty-state" style="display: none;">No exams scheduled</p>
-            <div class="badge-legend" style="margin-bottom: 20px;">
-                <span class="badge badge-confirmed">Confirmed</span>
-                <span class="badge badge-clash">Clash Flagged</span>
-                <span class="badge badge-pending">Pending</span>
-            </div>
-            <table class="timetable-table" id="exam-table" style="display: none;">
-                <thead>
-                    <tr>
-                        <th>Course Code</th>
-                        <th>Course Name</th>
-                        <th>Date</th>
-                        <th>Time</th>
-                        <th>Room</th>
-                        <th>Status</th>
+        <!-- Loading / empty messages: announced politely -->
+        <div aria-live="polite">
+            <p id="loading-state" class="state-message hidden"></p>
+            <p id="empty-state" class="state-message hidden">No exams scheduled yet. Check back later.</p>
+        </div>
+
+        <section id="results" class="hidden" aria-labelledby="results-summary">
+            <p id="results-summary" class="student-summary"></p>
+
+            <section id="next-exam" class="next-exam hidden" aria-labelledby="next-exam-heading">
+                <h2 id="next-exam-heading">Next exam</h2>
+                <p id="next-title" class="next-title"></p>
+                <p id="next-when" class="next-when"></p>
+                <p id="next-meta" class="next-meta"></p>
+            </section>
+
+            <ul class="badge-legend" aria-label="Status key">
+                <li><span class="badge badge-confirmed">Confirmed</span>Date, time and room are set</li>
+                <li><span class="badge badge-clash">Clash Flagged</span>May be rescheduled</li>
+                <li><span class="badge badge-pending">Pending</span>Details being confirmed</li>
+            </ul>
+
+            <table class="timetable-table" id="exam-table" role="table">
+                <caption class="sr-only">Exams, in date order</caption>
+                <thead role="rowgroup">
+                    <tr role="row">
+                        <th role="columnheader" scope="col">Course code</th>
+                        <th role="columnheader" scope="col">Course name</th>
+                        <th role="columnheader" scope="col">Date</th>
+                        <th role="columnheader" scope="col">Time</th>
+                        <th role="columnheader" scope="col">Room</th>
+                        <th role="columnheader" scope="col">Status</th>
                     </tr>
                 </thead>
-                <tbody id="exam-tbody">
-                    <!-- Rows will be injected via JavaScript -->
+                <tbody id="exam-tbody" role="rowgroup">
+                    <!-- Rows are injected by student.js -->
                 </tbody>
             </table>
-        </div>
-    </div>
+        </section>
+    </main>
 
-    <!-- Fixed path: go up one level to 'frontend/', then into 'js/' -->
     <script src="../js/student.js"></script>
 </body>
 </html>

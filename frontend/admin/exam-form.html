@@ -8,11 +8,11 @@
   <link rel="stylesheet" href="../css/admin.css">
 </head>
 <body data-page="exam-form">
-  <nav id="nav"></nav>
+  <nav id="nav" aria-label="Admin"></nav>
   <main>
-    <h1 id="form-title">Log Exam</h1>
-    <div id="form-error" class="msg error hidden"></div>
-    <div id="clash-banner" class="warning-box hidden">
+    <h1 id="form-title">Log exam</h1>
+    <div id="form-error" class="msg error hidden" role="alert"></div>
+    <div id="clash-banner" class="warning-box hidden" role="alert">
       <strong>Clash detected:</strong> <span id="clash-text"></span><br>
       The exam was saved and flagged as Pending Review.
       <a href="clash.html">Go to Clash Review</a>
@@ -21,16 +21,16 @@
       <label for="unit">Unit</label>
       <select id="unit" required></select>
 
-      <label for="exam-date">Exam Date</label>
+      <label for="exam-date">Exam date</label>
       <input id="exam-date" type="date" required>
 
       <div class="row">
         <div>
-          <label for="start-time">Start Time</label>
+          <label for="start-time">Start time</label>
           <input id="start-time" type="time" required>
         </div>
         <div>
-          <label for="end-time">End Time</label>
+          <label for="end-time">End time</label>
           <input id="end-time" type="time" required>
         </div>
       </div>
@@ -39,7 +39,7 @@
       <select id="room" required></select>
 
       <div class="actions">
-        <button class="btn" type="submit">Save</button>
+        <button id="save-btn" class="btn" type="submit">Save exam</button>
         <a class="btn light" href="dashboard.html">Cancel</a>
       </div>
     </form>

@@ -8,18 +8,19 @@
   <link rel="stylesheet" href="../css/admin.css">
 </head>
 <body data-page="login">
-  <div class="login-wrap">
+  <main class="login-wrap">
     <form id="login-form" class="card login-card">
-      <h1>Admin Login</h1>
-      <div id="login-error" class="msg error hidden"></div>
+      <h1>Admin login</h1>
+      <div id="login-notice" class="msg info hidden" role="status"></div>
+      <div id="login-error" class="msg error hidden" role="alert"></div>
       <label for="username">Username</label>
       <input id="username" type="text" autocomplete="username" required>
       <label for="password">Password</label>
       <input id="password" type="password" autocomplete="current-password" required>
-      <button class="btn" type="submit">Login</button>
-      <p style="font-size:.8rem;color:#666;text-align:center">Use your administrator account.</p>
+      <button id="login-btn" class="btn" type="submit">Log in</button>
+      <p class="hint">Use your administrator account.</p>
     </form>
-  </div>
+  </main>
   <script src="../js/admin.js"></script>
 </body>
 </html>

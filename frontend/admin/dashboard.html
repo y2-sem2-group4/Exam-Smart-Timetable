@@ -8,25 +8,31 @@
   <link rel="stylesheet" href="../css/admin.css">
 </head>
 <body data-page="dashboard">
-  <nav id="nav"></nav>
+  <nav id="nav" aria-label="Admin"></nav>
   <main>
-    <h1>Exam Dashboard</h1>
+    <h1>Exam dashboard</h1>
     <div class="controls">
-      <label for="status-filter" style="margin:0">Status</label>
-      <select id="status-filter">
-        <option value="all">All</option>
-        <option value="scheduled">Scheduled</option>
-        <option value="pending_review">Pending Review</option>
-        <option value="resolved">Resolved</option>
-      </select>
-      <a class="btn light spacer" href="clash.html">Clash Review <span id="clash-count" class="count">0</span></a>
-      <a class="btn" href="exam-form.html">+ Log Exam</a>
+      <div class="control">
+        <label for="status-filter">Status</label>
+        <select id="status-filter">
+          <option value="all">All</option>
+          <option value="scheduled">Scheduled</option>
+          <option value="pending_review">Pending Review</option>
+          <option value="resolved">Resolved</option>
+        </select>
+      </div>
+      <div class="control">
+        <label for="unit-search">Search unit</label>
+        <input id="unit-search" type="search" placeholder="Code or name" autocomplete="off">
+      </div>
+      <a class="btn light spacer" href="clash.html">Clash review <span id="clash-count" class="count">0</span></a>
+      <a class="btn" href="exam-form.html">+ Log exam</a>
     </div>
-    <div id="page-error" class="msg error hidden"></div>
+    <div id="page-error" class="msg error hidden" role="alert"></div>
     <div class="table-wrap">
       <table>
         <thead>
-          <tr><th>Unit</th><th>Date</th><th>Time</th><th>Room</th><th>Status</th><th></th></tr>
+          <tr><th scope="col">Unit</th><th scope="col">Date</th><th scope="col">Time</th><th scope="col">Room</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Actions</span></th></tr>
         </thead>
         <tbody id="exam-tbody"></tbody>
       </table>

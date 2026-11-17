@@ -2,13 +2,14 @@ import json
 
 from django.contrib.auth import authenticate, login
 from django.db import DatabaseError
+from django.utils.dateparse import parse_date, parse_time
 from django.http import JsonResponse
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET, require_http_methods
 
 from .models import Enrolment, Exam, ExamStatus, Room, Student, Unit
-from .services import check_and_flag_exam_clashes
+from .services import check_and_flag_exam_clashes, recheck_exam_clashes
 
 
 def _exam_data(exam):
@@ -37,6 +38,26 @@ def _json_body(request):
 
 def _require_staff(request):
     return request.user.is_authenticated and request.user.is_staff
+
+
+def _validated_schedule(data, exam=None):
+    exam_date = data.get('exam_date', exam.exam_date if exam else None)
+    start_time = data.get('start_time', exam.start_time if exam else None)
+    end_time = data.get('end_time', exam.end_time if exam else None)
+
+    if isinstance(exam_date, str):
+        exam_date = parse_date(exam_date)
+    if isinstance(start_time, str):
+        start_time = parse_time(start_time)
+    if isinstance(end_time, str):
+        end_time = parse_time(end_time)
+    if exam_date is None:
+        raise ValueError('exam_date must be a valid date in YYYY-MM-DD format.')
+    if start_time is None or end_time is None:
+        raise ValueError('start_time and end_time must be valid times.')
+    if end_time <= start_time:
+        raise ValueError('end_time must be after start_time.')
+    return exam_date, start_time, end_time
 
 
 @ensure_csrf_cookie
@@ -79,12 +100,13 @@ def exam_list(request):
         data = _json_body(request)
         unit = Unit.objects.get(id=data['unit_id'])
         room = Room.objects.get(id=data['room_id']) if data.get('room_id') else None
+        exam_date, start_time, end_time = _validated_schedule(data)
         exam = Exam.objects.create(
             unit=unit,
             room=room,
-            exam_date=data['exam_date'],
-            start_time=data['start_time'],
-            end_time=data['end_time'],
+            exam_date=exam_date,
+            start_time=start_time,
+            end_time=end_time,
         )
         clash = check_and_flag_exam_clashes(exam)
         return JsonResponse({
@@ -105,17 +127,17 @@ def reassign_exam(request, pk):
     try:
         data = _json_body(request)
         exam = Exam.objects.select_related('unit').get(pk=pk)
+        previous_date = exam.exam_date
         if 'unit_id' in data:
             exam.unit = Unit.objects.get(id=data['unit_id'])
         if 'room_id' in data:
             exam.room = Room.objects.get(id=data['room_id']) if data['room_id'] else None
-        for field in ('exam_date', 'start_time', 'end_time'):
-            if field in data:
-                setattr(exam, field, data[field])
+        exam.exam_date, exam.start_time, exam.end_time = _validated_schedule(data, exam)
 
         exam.status = ExamStatus.PENDING_REVIEW
         exam.save()
         clash = check_and_flag_exam_clashes(exam)
+        recheck_exam_clashes(exam, previous_date)
         return JsonResponse({
             'message': 'Exam reassigned',
             'status': exam.status,
