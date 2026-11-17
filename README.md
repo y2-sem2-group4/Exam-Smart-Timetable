@@ -209,6 +209,23 @@ loading `student.js`. The backend accepts JSON admin requests at
 
 Backend team: update this table as each endpoint goes live, so frontend isn't guessing.
 
+### Loading demo data
+
+Create an administrator explicitly; the project never seeds a superuser or
+password:
+
+```bash
+cd backend
+python manage.py createsuperuser
+python manage.py seed_demo
+```
+
+`seed_demo` is safe to run more than once. It creates sample students, units,
+rooms, enrolments, and exams demonstrating a shared-student clash, a
+room-capacity clash, and a valid back-to-back pair. For Render's free tier,
+run these commands locally with `DATABASE_URL` set to the Supabase database,
+then log in to `/admin/` with the superuser you created.
+
 ---
 
 ## Contributing
