@@ -91,6 +91,45 @@ python -m http.server 5500
 
 Frontend runs at `http://localhost:5500`.
 
+### Deploying on Render
+
+This repository includes [`render.yaml`](./render.yaml), which deploys the
+Django backend and frontend as one Render web service. The frontend is served
+by Django at `/frontend/`, so a separate static-site service is not required.
+
+1. Push the repository to GitHub.
+2. In Render, choose **New → Blueprint** and select the repository.
+3. Keep the blueprint settings and create the service.
+4. In the service's environment variables, set `DATABASE_URL` to your
+   Supabase/PostgreSQL connection string. Do not commit this value.
+5. Redeploy if you changed an environment variable.
+
+Render runs these commands automatically:
+
+```text
+pip install -r requirements.txt
+python manage.py collectstatic --noinput
+python manage.py migrate
+gunicorn ESTBackend.wsgi:application
+```
+
+After deployment, open:
+
+```text
+https://<your-render-service>.onrender.com/frontend/student/timetable.html?student_no=ST001
+```
+
+The root URL redirects to the admin login page. The current admin JavaScript
+is still configured with `USE_MOCK = true`, and the backend does not yet
+provide the login, units, or rooms endpoints used by the non-mock dashboard.
+The student timetable/API deployment is ready; switch the dashboard to
+non-mock mode only after those endpoints are implemented.
+
+For a custom domain, add it to `ALLOWED_HOSTS` and
+`CSRF_TRUSTED_ORIGINS` in Render (for example,
+`ALLOWED_HOSTS=.onrender.com,example.com` and
+`CSRF_TRUSTED_ORIGINS=https://*.onrender.com,https://example.com`).
+
 **Note:** because frontend and backend run on different ports, the browser will block API calls by default (CORS). Backend team handles this via `django-cors-headers` — if you're on frontend and getting blocked requests, that's not something you need to fix yourself, flag it instead.
 
 ---
