@@ -1,65 +1,90 @@
-from .models import Exam, Enrolment, ExamStatus
+from .models import Enrolment, Exam, ExamStatus
+
+
+def _append_reason(reasons, reason):
+    if reason not in reasons:
+        reasons.append(reason)
+
+
+def _mark_partner_exam(exam, reason):
+    existing_reasons = [
+        item for item in (exam.clash_reason or '').split(' | ') if item
+    ]
+    _append_reason(existing_reasons, reason)
+    exam.status = ExamStatus.PENDING_REVIEW
+    exam.clash_reason = ' | '.join(existing_reasons)
+    exam.save(update_fields=['status', 'clash_reason', 'updated_at'])
+
 
 def check_and_flag_exam_clashes(exam):
-    """
-    Evaluates a single exam for clashes against room capacity and other exams.
-    Updates the exam status to PENDING_REVIEW or RESOLVED accordingly.
-    """
+    """Evaluate capacity, room booking, and shared-student conflicts."""
     clash_detected = False
     reasons = []
 
-    # 1. Venue Capacity Deficit
     if exam.room:
-        # Count how many students are enrolled in the unit
         enrolled_count = Enrolment.objects.filter(unit=exam.unit).count()
         if enrolled_count > exam.room.capacity:
             clash_detected = True
-            reasons.append(f"Room too small (Cap: {exam.room.capacity}, Enrolled: {enrolled_count})")
+            _append_reason(
+                reasons,
+                f"Room too small (Cap: {exam.room.capacity}, Enrolled: {enrolled_count})",
+            )
 
-    # 2. Time Overlap Query 
-    # Strictly less than (<) and greater than (>) ensures back-to-back exams do NOT clash.
     overlapping_exams = Exam.objects.filter(
         exam_date=exam.exam_date,
         start_time__lt=exam.end_time,
-        end_time__gt=exam.start_time
-    ).exclude(id=exam.id) # Can't check the exam against itself!
-
-    # 3. Shared-Student Conflict Filtering
-    # Get the IDs of all students taking THIS exam's unit
-    students_in_this_unit = Enrolment.objects.filter(unit=exam.unit).values_list('student_id', flat=True)
+        end_time__gt=exam.start_time,
+    ).exclude(id=exam.id).select_related('unit', 'room')
+    students_in_this_unit = Enrolment.objects.filter(
+        unit=exam.unit
+    ).values_list('student_id', flat=True)
 
     for other_exam in overlapping_exams:
-        # Check if ANY of those students are also taking the OTHER exam's unit
+        if exam.room_id and exam.room_id == other_exam.room_id:
+            clash_detected = True
+            _append_reason(
+                reasons,
+                f"Room already booked by {other_exam.unit.unit_code}",
+            )
+            _mark_partner_exam(
+                other_exam,
+                f"Room already booked by {exam.unit.unit_code}",
+            )
+
         shared_student_exists = Enrolment.objects.filter(
             unit=other_exam.unit,
-            student_id__in=students_in_this_unit
+            student_id__in=students_in_this_unit,
         ).exists()
-
         if shared_student_exists:
             clash_detected = True
-            reason=f"Student clash with {other_exam.unit.unit_code}"
-            reasons.append(f"Student clash with {other_exam.unit.unit_code}")
+            _append_reason(
+                reasons,
+                f"Student clash with {other_exam.unit.unit_code}",
+            )
+            _mark_partner_exam(
+                other_exam,
+                f"Student clash with {exam.unit.unit_code}",
+            )
 
-            #updating other exam status to pending review 
-            exam.status = ExamStatus.PENDING_REVIEW
-            exam.clash_reason = reason
-    
-            other_exam.status = ExamStatus.PENDING_REVIEW
-            other_exam.clash_reason = reason
-            other_exam.save() # Save the updated status and updated_at timestamp (FR-10)
-
-
-    # 4. Automated System Status Flagging (FR-04)
     if clash_detected:
         exam.status = ExamStatus.PENDING_REVIEW
-        exam.clash_reason = " | ".join(reasons)
+        exam.clash_reason = ' | '.join(reasons)
+    elif exam.status == ExamStatus.PENDING_REVIEW:
+        exam.status = ExamStatus.RESOLVED
+        exam.clash_reason = None
 
-    else:
-        # If it was previously flagged but the admin fixed it, mark it resolved
-        if exam.status == ExamStatus.PENDING_REVIEW:
-            exam.status = ExamStatus.RESOLVED
-            exam.clash_reason = None # Clear the reason
-
-    exam.save() # Saves the updated status and updated_at timestamp (FR-10)
-    
+    exam.save()
     return clash_detected
+
+
+def recheck_exam_clashes(exam, previous_date=None):
+    """Re-evaluate pending exams on dates affected by a reassignment."""
+    dates = {exam.exam_date}
+    if previous_date:
+        dates.add(previous_date)
+
+    for related_exam in Exam.objects.filter(
+        exam_date__in=dates
+    ).exclude(id=exam.id).select_related('unit', 'room'):
+        if related_exam.status == ExamStatus.PENDING_REVIEW:
+            check_and_flag_exam_clashes(related_exam)
