@@ -202,6 +202,7 @@ function requireLoginAndNav(active) {
     <span class="brand">Exam Smart Timetable \u00B7 Admin</span>
     <a href="dashboard.html"${current("dashboard")}>Dashboard</a>
     <a href="clash.html"${current("clash")}>Clash review</a>
+    <a href="/admin/">Manage admins</a>
     <button id="logout" type="button">Log out</button>`;
   $("logout").addEventListener("click", () => {
     sessionStorage.removeItem("est_admin");
