@@ -4,10 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Exam Smart Timetable</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="landing-page">
     <main class="landing-container">
+        <div class="landing-topbar">
+            <a class="brand-lockup" href="/">
+                <span class="brand-mark" aria-hidden="true">EST</span>
+                <span>Exam Smart Timetable</span>
+            </a>
+            <a href="/frontend/admin/login.html">Staff login</a>
+        </div>
         <header class="landing-hero">
             <p class="eyebrow">Exam management made simple</p>
             <h1>Exam Smart Timetable</h1>
@@ -22,7 +30,7 @@
                     <label for="admission-number">Admission number</label>
                     <input id="admission-number" name="student_no" type="text"
                         autocomplete="off" spellcheck="false"
-                        placeholder="e.g. 220965" required>
+                        placeholder="Enter Admission Number e.g. 220965" required>
                     <button class="btn" type="submit">View timetable</button>
                 </form>
             </article>
