@@ -10,4 +10,5 @@ urlpatterns = [
     path('admin/login/', views.admin_login, name='admin-login'),
     path('csrf/', views.csrf_token, name='csrf-token'),
     path('timetable/<str:admission_number>/', views.student_timetable, name='student-timetable'),
+        path('exams/<int:pk>/suggest-room/', views.suggest_room, name='exam-suggest-room'),
 ]

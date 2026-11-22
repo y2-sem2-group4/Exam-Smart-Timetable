@@ -196,3 +196,38 @@ def student_timetable(request, admission_number):
         'admission_number': student.admission_number,
         'exams': [_exam_data(exam) for exam in exams],
     })
+
+@require_GET
+def suggest_room(request, pk):
+    if not _require_staff(request):
+        return JsonResponse({'error': 'Forbidden'}, status=403)
+
+    try:
+        exam = Exam.objects.select_related('unit').get(pk=pk)
+    except Exam.DoesNotExist:
+        return JsonResponse({'error': 'Exam not found'}, status=404)
+
+    # Get all exams happening at the same time
+    overlapping_exams = Exam.objects.filter(
+        exam_date=exam.exam_date,
+        start_time__lt=exam.end_time,
+        end_time__gt=exam.start_time
+    ).exclude(id=exam.id)
+
+    # Get the IDs of rooms that are already booked
+    booked_room_ids = overlapping_exams.values_list('room_id', flat=True)
+
+    # Count enrolled students for this unit
+    enrolled_count = Enrolment.objects.filter(unit=exam.unit).count()
+
+    # Find rooms that are NOT booked and have enough capacity
+    available_rooms = Room.objects.exclude(id__in=booked_room_ids).filter(
+        capacity__gte=enrolled_count
+    ).values('id', 'room_name', 'capacity')
+
+    return JsonResponse({
+        'exam_id': exam.id,
+        'unit_code': exam.unit.unit_code,
+        'required_capacity': enrolled_count,
+        'suggested_rooms': list(available_rooms)
+    })
