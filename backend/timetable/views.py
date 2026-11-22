@@ -1,5 +1,6 @@
 import json
 
+from datetime import date
 from django.contrib.auth import authenticate, login
 from django.db import DatabaseError
 from django.utils.dateparse import parse_date, parse_time
@@ -57,6 +58,11 @@ def _validated_schedule(data, exam=None):
         raise ValueError('start_time and end_time must be valid times.')
     if end_time <= start_time:
         raise ValueError('end_time must be after start_time.')
+    # --- BE-11 ---
+    from datetime import date
+    if exam_date < date.today():
+        raise ValueError('exam_date cannot be in the past.')
+
     return exam_date, start_time, end_time
 
 
