@@ -56,5 +56,11 @@ class Exam(models.Model):
     clash_reason = models.CharField(max_length=255, blank=True, null=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        # BE-14: Composite index for clash detection queries
+        indexes = [
+            models.Index(fields=['exam_date', 'start_time', 'end_time']),
+        ]
+
     def __str__(self):
         return f"{self.unit.unit_code} on {self.exam_date}"
