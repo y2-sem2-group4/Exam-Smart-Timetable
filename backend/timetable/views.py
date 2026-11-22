@@ -1,7 +1,7 @@
 import json
 
 from datetime import date
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.db import DatabaseError
 from django.utils.dateparse import parse_date, parse_time
 from django.http import JsonResponse
@@ -89,6 +89,10 @@ def admin_login(request):
     login(request, user)
     return JsonResponse({'message': 'Login successful'})
 
+@require_http_methods(['POST'])
+def admin_logout(request):
+    logout(request)
+    return JsonResponse({'message': 'Logged out successfully'})
 
 @require_http_methods(['GET', 'POST'])
 def exam_list(request):
