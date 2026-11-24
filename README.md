@@ -270,5 +270,5 @@ Branching rules, commit format, PR process and what "done" means: see [`CONTRIBU
 | Module | Owners | Covers |
 |---|---|---|
 | Backend Core | Edith, Lenny | Models, clash-detection logic, API, database |
-| Admin Interface | Angel, Daniel | Login, dashboard, exam form, clash review |
-| Student Interface | June, Craig | Read-only timetable lookup, status badges |
+| Admin Interface | June, Craig | Login, dashboard, exam form, clash review |
+| Student Interface | Angel, Daniel | Read-only timetable lookup, status badges |
