@@ -1,6 +1,7 @@
 from datetime import date, time
 
-from django.core.management.base import BaseCommand
+from django.contrib.auth import get_user_model
+from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from timetable.models import Enrolment, Exam, Room, Student, Unit
@@ -8,10 +9,30 @@ from timetable.services import check_and_flag_exam_clashes
 
 
 class Command(BaseCommand):
-    help = 'Create or update safe, repeatable demo data without creating users.'
+    help = (
+        'Create or update safe, repeatable demo data. No users are created unless '
+        '--admin-username and --admin-password are given.'
+    )
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--admin-username',
+            help='Also create or update a staff/superuser with this username.',
+        )
+        parser.add_argument(
+            '--admin-password',
+            help='Password for --admin-username (never commit real passwords).',
+        )
 
     @transaction.atomic
     def handle(self, *args, **options):
+        admin_username = options.get('admin_username')
+        admin_password = options.get('admin_password')
+        if bool(admin_username) != bool(admin_password):
+            raise CommandError(
+                '--admin-username and --admin-password must be given together.'
+            )
+
         students = {
             admission_number: Student.objects.update_or_create(
                 admission_number=admission_number,
@@ -108,6 +129,16 @@ class Command(BaseCommand):
             )
             check_and_flag_exam_clashes(exam)
 
-        self.stdout.write(self.style.SUCCESS(
-            'Demo data seeded. No users or passwords were created.'
-        ))
+        if admin_username:
+            user, _ = get_user_model().objects.get_or_create(username=admin_username)
+            user.is_staff = True
+            user.is_superuser = True
+            user.set_password(admin_password)
+            user.save()
+            self.stdout.write(self.style.SUCCESS(
+                f'Demo data seeded. Staff user "{admin_username}" is ready.'
+            ))
+        else:
+            self.stdout.write(self.style.SUCCESS(
+                'Demo data seeded. No users or passwords were created.'
+            ))

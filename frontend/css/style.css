@@ -146,11 +146,9 @@ input, select {
   white-space: nowrap;
   vertical-align: middle;
 }
-/* student wording */
-.badge-confirmed { background: #bbf7d0; color: #14532d; border-color: #86efac; }
-.badge-clash     { background: #fef08a; color: #713f12; border-color: #fde047; }
+/* neutral fallback for an unknown status */
 .badge-pending   { background: #e2e3e5; color: #383d41; border-color: #cbd0d4; }
-/* admin wording (raw backend statuses) */
+/* the three real statuses (same on admin and student pages) */
 .badge-scheduled      { background: #e2e8f0; color: #334155; border-color: #cbd5e1; }
 .badge-pending_review { background: #fef08a; color: #713f12; border-color: #fde047; }
 .badge-resolved       { background: #bbf7d0; color: #14532d; border-color: #86efac; }

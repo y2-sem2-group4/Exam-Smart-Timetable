@@ -90,6 +90,11 @@ const fromMinutes = minutes => {
     ":" + String(clamped % 60).padStart(2, "0");
 };
 
+const todayISO = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+};
+
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -204,10 +209,16 @@ function requireLoginAndNav(active) {
     <a href="clash.html"${current("clash")}>Clash review</a>
     <a href="/admin/">Manage admins</a>
     <button id="logout" type="button">Log out</button>`;
-  $("logout").addEventListener("click", () => {
+  $("logout").addEventListener("click", async () => {
+    // End the server-side session too, not just the browser flag.
+    try { await api("/logout/", { method: "POST" }); } catch (error) { /* already signed out */ }
     sessionStorage.removeItem("est_admin");
     window.location.href = "login.html";
   });
+  // The sessionStorage flag only says this browser logged in once; confirm with the server.
+  api("/admin/session/")
+    .then(data => { if (!data.authenticated) sessionExpired(); })
+    .catch(() => { /* a network error is reported by the page's own requests */ });
   return true;
 }
 
@@ -311,6 +322,7 @@ async function initExamForm() {
   const unitSelect = $("unit");
   const roomSelect = $("room");
   const saveButton = $("save-btn");
+  if (!id) $("exam-date").min = todayISO(); // the API rejects past dates for new exams
 
   try {
     const [units, rooms] = await Promise.all([getUnits(), getRooms()]);
@@ -411,6 +423,7 @@ async function initClash() {
         </div>
         <div class="card-actions">
           <button class="btn save-btn" type="button">Save and re-check</button>
+          <button class="btn light suggest-btn" type="button">Suggest rooms</button>
           <button class="btn light recheck-btn" type="button">Re-check without changes</button>
         </div>
       </div>`).join("");
@@ -421,12 +434,38 @@ async function initClash() {
     if (!button) return;
     const isSave = button.classList.contains("save-btn");
     const isRecheck = button.classList.contains("recheck-btn");
-    if (!isSave && !isRecheck) return;
+    const isSuggest = button.classList.contains("suggest-btn");
+    if (!isSave && !isRecheck && !isSuggest) return;
 
     const card = button.closest(".clash-card");
     if (card.dataset.busy) return;
     const message = $("clash-msg");
     const name = card.querySelector("h3").textContent.split(" - ")[0];
+
+    if (isSuggest) {
+      // Free rooms big enough for this exam's current date and time, smallest first.
+      button.disabled = true;
+      try {
+        const data = await api(`/exams/${encodeURIComponent(card.dataset.id)}/suggest-room/`);
+        if (!data.suggested_rooms.length) {
+          message.className = "msg error";
+          show(message, `No free room can hold ${data.required_capacity} students at that time. Try a different date or time.`);
+        } else {
+          const select = card.querySelector(".new-room");
+          fillSelect(select, data.suggested_rooms, "id",
+            room => `${room.room_name} (capacity ${room.capacity})`, "Keep current");
+          select.value = data.suggested_rooms[0].id;
+          message.className = "msg success";
+          show(message, `${name}: ${data.suggested_rooms.length} free room(s) can hold ${data.required_capacity} students. The smallest suitable one is selected, so click Save and re-check.`);
+        }
+      } catch (error) {
+        message.className = "msg error";
+        show(message, error.message);
+      } finally {
+        button.disabled = false;
+      }
+      return;
+    }
 
     const changes = {};
     if (isSave) {

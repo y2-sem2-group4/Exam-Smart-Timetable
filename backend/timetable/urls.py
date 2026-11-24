@@ -8,7 +8,8 @@ urlpatterns = [
     path('units/', views.unit_list, name='unit-list'),
     path('rooms/', views.room_list, name='room-list'),
     path('admin/login/', views.admin_login, name='admin-login'),
+    path('admin/session/', views.admin_session, name='admin-session'),
     path('csrf/', views.csrf_token, name='csrf-token'),
     path('timetable/<str:admission_number>/', views.student_timetable, name='student-timetable'),
-        path('exams/<int:pk>/suggest-room/', views.suggest_room, name='exam-suggest-room'),
+    path('exams/<int:pk>/suggest-room/', views.suggest_room, name='exam-suggest-room'),
 ]
