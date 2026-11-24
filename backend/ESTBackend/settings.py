@@ -71,9 +71,10 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'ESTBackend.wsgi.application'
 
-# Database: tests always use SQLite. Otherwise DATABASE_URL is used (Supabase /
-# PostgreSQL in production). For local development without DATABASE_URL we fall
-# back to a SQLite file so `python manage.py runserver` works out of the box.
+
+# Database
+# https://docs.djangoproject.com/en/4.2/ref/settings/#databases
+
 if 'test' in sys.argv:
     DATABASES = {
         'default': {
@@ -82,18 +83,16 @@ if 'test' in sys.argv:
         }
     }
 else:
-    _database_url = os.getenv('DATABASE_URL')
-    if not _database_url:
-        if not DEBUG:
-            raise ImproperlyConfigured('DATABASE_URL must be set in production.')
-        _database_url = f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
     DATABASES = {
-        'default': dj_database_url.parse(
-            _database_url,
+        'default': dj_database_url.config(
+            default=os.getenv('DATABASE_URL'),
             conn_max_age=0,
             conn_health_checks=True,
         )
     }
+
+# Password validation
+# https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
