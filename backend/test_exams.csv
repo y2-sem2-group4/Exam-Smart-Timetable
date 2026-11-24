@@ -1,0 +1,4 @@
+unit_code,room_name,exam_date,start_time,end_time
+MAT101,Demo Hall,2026-12-10,09:00,11:00
+PHY101,Demo Hall,2026-12-10,10:00,12:00
+CSC101,Demo Lab,2026-12-11,09:00,11:00

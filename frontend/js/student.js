@@ -5,25 +5,31 @@ const API_BASE_URL = window.API_BASE_URL || "";
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-/* Status wording follows the README:
-   scheduled / resolved            -> Confirmed
-   pending_review or clash_reason  -> Clash Flagged
-   anything else                   -> Pending */
+/* Same three badges as the admin dashboard (FR-08):
+   scheduled      -> Scheduled
+   pending_review (or any clash_reason) -> Pending Review
+   resolved       -> Resolved
+   anything else  -> Pending (neutral grey) */
 const STATUS = {
-    confirmed: { cls: "badge-confirmed", label: "Confirmed", note: "" },
-    flagged: {
-        cls: "badge-clash",
-        label: "Clash Flagged",
+    scheduled: { cls: "badge-scheduled", label: "Scheduled", note: "" },
+    pending_review: {
+        cls: "badge-pending_review",
+        label: "Pending Review",
         note: "This exam may be rescheduled. Check back soon.",
     },
-    pending: { cls: "badge-pending", label: "Pending", note: "Details are still being confirmed." },
+    resolved: {
+        cls: "badge-resolved",
+        label: "Resolved",
+        note: "A clash was fixed. These details are up to date.",
+    },
+    unknown: { cls: "badge-pending", label: "Pending", note: "Details are still being confirmed." },
 };
 
 function statusKey(status, clashReason) {
     const normalised = (status || "").toLowerCase().trim();
-    if (normalised === "pending_review" || String(clashReason || "").trim()) return "flagged";
-    if (normalised === "scheduled" || normalised === "resolved") return "confirmed";
-    return "pending";
+    if (normalised === "pending_review" || String(clashReason || "").trim()) return "pending_review";
+    if (normalised === "scheduled" || normalised === "resolved") return normalised;
+    return "unknown";
 }
 
 /* ---------- Date / time helpers (local time, no timezone shifts) ---------- */
@@ -166,7 +172,7 @@ document.addEventListener("DOMContentLoaded", () => {
             `${formatDate(exam.exam_date)} \u00B7 ${formatTimeRange(exam.start_time, exam.end_time)}`;
         const meta = [`Room: ${exam.room_name || "TBC"}`];
         if (start) meta.unshift(relativeDay(start, now));
-        if (statusKey(exam.status, exam.clash_reason) === "flagged") meta.push("may be rescheduled");
+        if (statusKey(exam.status, exam.clash_reason) === "pending_review") meta.push("may be rescheduled");
         $("next-meta").textContent = meta.join(" \u00B7 ");
         nextExam.classList.remove("hidden");
     }

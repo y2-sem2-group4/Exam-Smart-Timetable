@@ -4,9 +4,22 @@ from django.contrib.auth.models import User
 from django.db import IntegrityError
 from .models import Enrolment, Exam, ExamStatus, Room, Student, Unit
 from .services import check_and_flag_exam_clashes
-from datetime import date, time
+from datetime import time, timedelta
+from django.utils import timezone
 import json
 import time as time_module
+
+# Test dates are relative to today so the suite keeps passing as the calendar moves
+# (the API rejects exam dates in the past).
+_BASE_DAY = timezone.localdate() + timedelta(days=30)
+
+
+def day(n):
+    return _BASE_DAY + timedelta(days=n - 1)
+
+
+def iso(n):
+    return day(n).isoformat()
 
 class ClashDetectionTests(TestCase):
     def setUp(self):
@@ -21,8 +34,8 @@ class ClashDetectionTests(TestCase):
         self.other_room = Room.objects.create(room_name="Room B", capacity=100)
 
     def test_overlapping_shared_student_exams_flag_both_exams(self):
-        first_exam = Exam.objects.create(unit=self.maths, room=self.room, exam_date=date(2026, 12, 1), start_time=time(9, 0), end_time=time(11, 0))
-        second_exam = Exam.objects.create(unit=self.physics, room=self.room, exam_date=date(2026, 12, 1), start_time=time(10, 0), end_time=time(12, 0))
+        first_exam = Exam.objects.create(unit=self.maths, room=self.room, exam_date=day(1), start_time=time(9, 0), end_time=time(11, 0))
+        second_exam = Exam.objects.create(unit=self.physics, room=self.room, exam_date=day(1), start_time=time(10, 0), end_time=time(12, 0))
 
         check_and_flag_exam_clashes(second_exam)
 
@@ -35,8 +48,8 @@ class ClashDetectionTests(TestCase):
         self.assertIn("Student clash with MAT101", second_exam.clash_reason)
 
     def test_back_to_back_exams_do_not_clash(self):
-        first_exam = Exam.objects.create(unit=self.maths, room=self.room, exam_date=date(2026, 12, 1), start_time=time(9, 0), end_time=time(11, 0))
-        second_exam = Exam.objects.create(unit=self.physics, room=self.room, exam_date=date(2026, 12, 1), start_time=time(11, 0), end_time=time(13, 0))
+        first_exam = Exam.objects.create(unit=self.maths, room=self.room, exam_date=day(1), start_time=time(9, 0), end_time=time(11, 0))
+        second_exam = Exam.objects.create(unit=self.physics, room=self.room, exam_date=day(1), start_time=time(11, 0), end_time=time(13, 0))
 
         check_and_flag_exam_clashes(second_exam)
         first_exam.refresh_from_db()
@@ -48,7 +61,7 @@ class ClashDetectionTests(TestCase):
     def test_capacity_overflow_flags_exam(self):
         zero_room = Room.objects.create(room_name="Zero Room", capacity=0)
         
-        exam = Exam.objects.create(unit=self.maths, room=zero_room, exam_date=date(2026, 12, 1), start_time=time(9, 0), end_time=time(11, 0))
+        exam = Exam.objects.create(unit=self.maths, room=zero_room, exam_date=day(1), start_time=time(9, 0), end_time=time(11, 0))
         check_and_flag_exam_clashes(exam)
         exam.refresh_from_db()
         
@@ -59,8 +72,8 @@ class ClashDetectionTests(TestCase):
         Enrolment.objects.filter(student=self.student, unit=self.physics).delete()
         Enrolment.objects.create(student=s2, unit=self.physics)
 
-        e1 = Exam.objects.create(unit=self.maths, room=self.room, exam_date=date(2026, 12, 1), start_time=time(9, 0), end_time=time(11, 0))
-        e2 = Exam.objects.create(unit=self.physics, room=self.other_room, exam_date=date(2026, 12, 1), start_time=time(10, 0), end_time=time(12, 0))
+        e1 = Exam.objects.create(unit=self.maths, room=self.room, exam_date=day(1), start_time=time(9, 0), end_time=time(11, 0))
+        e2 = Exam.objects.create(unit=self.physics, room=self.other_room, exam_date=day(1), start_time=time(10, 0), end_time=time(12, 0))
 
         check_and_flag_exam_clashes(e1)
         check_and_flag_exam_clashes(e2)
@@ -72,11 +85,11 @@ class ClashDetectionTests(TestCase):
 
     def test_room_overlap_flags_both_exams(self):
         first_exam = Exam.objects.create(
-            unit=self.maths, room=self.room, exam_date=date(2026, 12, 1),
+            unit=self.maths, room=self.room, exam_date=day(1),
             start_time=time(9, 0), end_time=time(11, 0),
         )
         second_exam = Exam.objects.create(
-            unit=self.physics, room=self.room, exam_date=date(2026, 12, 1),
+            unit=self.physics, room=self.room, exam_date=day(1),
             start_time=time(10, 0), end_time=time(12, 0),
         )
 
@@ -91,21 +104,21 @@ class ClashDetectionTests(TestCase):
 
     def test_reassigning_exam_rechecks_partner_exam(self):
         first_exam = Exam.objects.create(
-            unit=self.maths, room=self.other_room, exam_date=date(2026, 12, 1),
+            unit=self.maths, room=self.other_room, exam_date=day(1),
             start_time=time(9, 0), end_time=time(11, 0),
         )
         second_exam = Exam.objects.create(
-            unit=self.physics, room=self.other_room, exam_date=date(2026, 12, 1),
+            unit=self.physics, room=self.other_room, exam_date=day(1),
             start_time=time(10, 0), end_time=time(12, 0),
         )
         check_and_flag_exam_clashes(second_exam)
 
-        second_exam.exam_date = date(2026, 12, 2)
+        second_exam.exam_date = day(2)
         second_exam.start_time = time(10, 0)
         second_exam.end_time = time(12, 0)
         second_exam.save()
         from .services import recheck_exam_clashes
-        recheck_exam_clashes(second_exam, date(2026, 12, 1))
+        recheck_exam_clashes(second_exam, day(1))
 
         first_exam.refresh_from_db()
         self.assertEqual(first_exam.status, ExamStatus.RESOLVED)
@@ -116,7 +129,7 @@ class ClashDetectionTests(TestCase):
         second_student = Student.objects.create(admission_number="ST002", name="Second Student")
         Enrolment.objects.create(student=second_student, unit=self.maths)
         exam = Exam.objects.create(
-            unit=self.maths, room=boundary_room, exam_date=date(2026, 12, 2),
+            unit=self.maths, room=boundary_room, exam_date=day(2),
             start_time=time(9, 0), end_time=time(11, 0),
         )
         check_and_flag_exam_clashes(exam)
@@ -126,7 +139,7 @@ class ClashDetectionTests(TestCase):
     def test_capacity_overflow_by_one_is_flagged(self):
         small_room = Room.objects.create(room_name="Small", capacity=0)
         exam = Exam.objects.create(
-            unit=self.maths, room=small_room, exam_date=date(2026, 12, 2),
+            unit=self.maths, room=small_room, exam_date=day(2),
             start_time=time(9, 0), end_time=time(11, 0),
         )
         check_and_flag_exam_clashes(exam)
@@ -135,11 +148,11 @@ class ClashDetectionTests(TestCase):
 
     def test_same_time_on_different_dates_does_not_clash(self):
         first_exam = Exam.objects.create(
-            unit=self.maths, room=self.room, exam_date=date(2026, 12, 1),
+            unit=self.maths, room=self.room, exam_date=day(1),
             start_time=time(9, 0), end_time=time(11, 0),
         )
         second_exam = Exam.objects.create(
-            unit=self.physics, room=self.room, exam_date=date(2026, 12, 2),
+            unit=self.physics, room=self.room, exam_date=day(2),
             start_time=time(9, 0), end_time=time(11, 0),
         )
         check_and_flag_exam_clashes(first_exam)
@@ -151,7 +164,7 @@ class ClashDetectionTests(TestCase):
 
     def test_room_none_does_not_crash(self):
         exam = Exam.objects.create(
-            unit=self.maths, room=None, exam_date=date(2026, 12, 3),
+            unit=self.maths, room=None, exam_date=day(3),
             start_time=time(9, 0), end_time=time(11, 0),
         )
         self.assertFalse(check_and_flag_exam_clashes(exam))
@@ -168,7 +181,7 @@ class ApiContractTests(TestCase):
         self.room = Room.objects.create(room_name="Room A", capacity=50)
         Enrolment.objects.create(student=self.student, unit=self.unit)
         
-        self.exam = Exam.objects.create(unit=self.unit, room=self.room, exam_date=date(2026, 12, 1), start_time=time(9, 0), end_time=time(11, 0))
+        self.exam = Exam.objects.create(unit=self.unit, room=self.room, exam_date=day(1), start_time=time(9, 0), end_time=time(11, 0))
 
     def test_student_timetable_returns_their_exams(self):
         response = self.client.get(reverse('student-timetable', args=['ST001']))
@@ -183,7 +196,7 @@ class ApiContractTests(TestCase):
                 'unit_code': 'MAT101',
                 'unit_name': 'Maths',
                 'room_name': 'Room A',
-                'exam_date': '2026-12-01',
+                'exam_date': iso(1),
                 'start_time': '09:00:00',
                 'end_time': '11:00:00',
                 'status': ExamStatus.SCHEDULED,
@@ -204,7 +217,7 @@ class ApiContractTests(TestCase):
         Enrolment.objects.create(student=self.student, unit=second_unit)
         Exam.objects.create(
             unit=second_unit,
-            exam_date=date(2026, 12, 2),
+            exam_date=day(2),
             start_time=time(9, 0),
             end_time=time(11, 0),
             status=ExamStatus.PENDING_REVIEW,
@@ -239,7 +252,7 @@ class ApiContractTests(TestCase):
         payload = {
             "unit_id": self.unit.id,
             "room_id": self.room.id,
-            "exam_date": "2026-12-02",
+            "exam_date": iso(2),
             "start_time": "09:00:00",
             "end_time": "11:00:00"
         }
@@ -281,7 +294,7 @@ class ApiContractTests(TestCase):
             reverse('exam-reassign', args=[self.exam.id]),
             data=json.dumps({
                 'room_id': new_room.id,
-                'exam_date': '2026-12-03',
+                'exam_date': iso(3),
                 'start_time': '12:00:00',
                 'end_time': '14:00:00',
             }),
@@ -292,7 +305,7 @@ class ApiContractTests(TestCase):
         self.assertEqual(response.json()['status'], ExamStatus.RESOLVED)
         self.exam.refresh_from_db()
         self.assertEqual(self.exam.room_id, new_room.id)
-        self.assertEqual(str(self.exam.exam_date), '2026-12-03')
+        self.assertEqual(str(self.exam.exam_date), iso(3))
 
     def test_staff_login_endpoint_authenticates_staff(self):
         response = self.client.post(
@@ -345,7 +358,7 @@ class ApiContractTests(TestCase):
             data=json.dumps({
                 'unit_id': self.unit.id,
                 'room_id': self.room.id,
-                'exam_date': '2026-12-03',
+                'exam_date': iso(3),
                 'start_time': '11:00',
                 'end_time': '09:00',
             }),
@@ -391,7 +404,7 @@ class ApiContractTests(TestCase):
         response = self.client.patch(
             reverse('exam-reassign', args=[9999]),
             data=json.dumps({
-                'exam_date': '2026-12-03',
+                'exam_date': iso(3),
                 'start_time': '09:00',
                 'end_time': '11:00',
             }),
@@ -403,14 +416,14 @@ class ApiContractTests(TestCase):
         second_unit = Unit.objects.create(unit_code="PHY101", unit_name="Physics")
         Enrolment.objects.create(student=self.student, unit=second_unit)
         Exam.objects.create(
-            unit=second_unit, room=self.room, exam_date=date(2026, 12, 5),
+            unit=second_unit, room=self.room, exam_date=day(5),
             start_time=time(10, 0), end_time=time(12, 0),
         )
         self.client.login(username="admin", password="pw")
         response = self.client.patch(
             reverse('exam-reassign', args=[self.exam.id]),
             data=json.dumps({
-                'exam_date': '2026-12-05',
+                'exam_date': iso(5),
                 'start_time': '09:00',
                 'end_time': '11:00',
             }),
@@ -422,7 +435,7 @@ class ApiContractTests(TestCase):
     def test_student_timetable_excludes_unenrolled_units(self):
         other_unit = Unit.objects.create(unit_code="PHY101", unit_name="Physics")
         Exam.objects.create(
-            unit=other_unit, room=self.room, exam_date=date(2026, 12, 4),
+            unit=other_unit, room=self.room, exam_date=day(4),
             start_time=time(9, 0), end_time=time(11, 0),
         )
         response = self.client.get(reverse('student-timetable', args=['ST001']))
@@ -449,3 +462,123 @@ class ApiContractTests(TestCase):
         self.exam.save()
         self.exam.refresh_from_db()
         self.assertNotEqual(self.exam.updated_at, previous)
+
+
+
+class PastDateAndSessionTests(TestCase):
+    """Regression tests for the final-week fixes."""
+
+    def setUp(self):
+        self.client = Client()
+        self.admin = User.objects.create_user(username="admin", password="pw", is_staff=True)
+        self.student = Student.objects.create(admission_number="ST001", name="Test Student")
+        self.unit = Unit.objects.create(unit_code="MAT101", unit_name="Maths")
+        self.room = Room.objects.create(room_name="Room A", capacity=50)
+        Enrolment.objects.create(student=self.student, unit=self.unit)
+
+    def _post_exam(self, exam_date):
+        return self.client.post(
+            reverse('exam-list'),
+            data=json.dumps({
+                'unit_id': self.unit.id, 'room_id': self.room.id,
+                'exam_date': exam_date, 'start_time': '09:00', 'end_time': '11:00',
+            }),
+            content_type="application/json",
+        )
+
+    def _patch(self, exam, payload):
+        return self.client.patch(
+            reverse('exam-reassign', args=[exam.id]),
+            data=json.dumps(payload), content_type="application/json",
+        )
+
+    def test_creating_an_exam_in_the_past_is_rejected(self):
+        self.client.login(username="admin", password="pw")
+        yesterday = (timezone.localdate() - timedelta(days=1)).isoformat()
+        self.assertEqual(self._post_exam(yesterday).status_code, 400)
+
+    def test_exam_whose_date_has_passed_can_still_be_rechecked_and_reassigned(self):
+        self.client.login(username="admin", password="pw")
+        past = timezone.localdate() - timedelta(days=3)
+        exam = Exam.objects.create(
+            unit=self.unit, room=self.room, exam_date=past,
+            start_time=time(9, 0), end_time=time(11, 0),
+            status=ExamStatus.PENDING_REVIEW, clash_reason='old clash',
+        )
+        bigger = Room.objects.create(room_name="Room B", capacity=100)
+        self.assertEqual(self._patch(exam, {}).status_code, 200)
+        self.assertEqual(self._patch(exam, {'room_id': bigger.id}).status_code, 200)
+        exam.refresh_from_db()
+        self.assertEqual(exam.status, ExamStatus.RESOLVED)
+
+    def test_moving_an_exam_into_the_past_is_rejected(self):
+        self.client.login(username="admin", password="pw")
+        exam = Exam.objects.create(
+            unit=self.unit, room=self.room, exam_date=day(1),
+            start_time=time(9, 0), end_time=time(11, 0),
+        )
+        yesterday = (timezone.localdate() - timedelta(days=1)).isoformat()
+        self.assertEqual(self._patch(exam, {'exam_date': yesterday}).status_code, 400)
+
+    def test_session_endpoint_reports_login_state(self):
+        self.assertFalse(self.client.get(reverse('admin-session')).json()['authenticated'])
+        self.client.post(
+            reverse('admin-login'),
+            data=json.dumps({'username': 'admin', 'password': 'pw'}),
+            content_type="application/json",
+        )
+        self.assertTrue(self.client.get(reverse('admin-session')).json()['authenticated'])
+
+    def test_logout_ends_the_server_session(self):
+        self.client.login(username="admin", password="pw")
+        self.assertEqual(self.client.post(reverse('admin-logout')).status_code, 200)
+        self.assertFalse(self.client.get(reverse('admin-session')).json()['authenticated'])
+        self.assertEqual(self._post_exam(iso(2)).status_code, 403)
+
+    def test_suggest_room_requires_staff(self):
+        exam = Exam.objects.create(
+            unit=self.unit, room=self.room, exam_date=day(1),
+            start_time=time(9, 0), end_time=time(11, 0),
+        )
+        self.assertEqual(self.client.get(reverse('exam-suggest-room', args=[exam.id])).status_code, 403)
+
+    def test_suggest_room_ignores_overlapping_exams_without_a_room(self):
+        self.client.login(username="admin", password="pw")
+        exam = Exam.objects.create(
+            unit=self.unit, room=self.room, exam_date=day(1),
+            start_time=time(9, 0), end_time=time(11, 0),
+        )
+        other_unit = Unit.objects.create(unit_code="PHY101", unit_name="Physics")
+        Exam.objects.create(  # overlaps but has no room: must not hide every room
+            unit=other_unit, room=None, exam_date=day(1),
+            start_time=time(10, 0), end_time=time(12, 0),
+        )
+        booked = Room.objects.create(room_name="Booked", capacity=80)
+        free = Room.objects.create(room_name="Free", capacity=80)
+        Exam.objects.create(
+            unit=other_unit, room=booked, exam_date=day(1),
+            start_time=time(9, 30), end_time=time(10, 30),
+        )
+        data = self.client.get(reverse('exam-suggest-room', args=[exam.id])).json()
+        names = [room['room_name'] for room in data['suggested_rooms']]
+        self.assertIn('Free', names)
+        self.assertNotIn('Booked', names)
+
+
+class SeedCommandTests(TestCase):
+    def test_seed_demo_is_repeatable_and_creates_no_users_by_default(self):
+        from django.core.management import call_command
+        from io import StringIO
+        call_command('seed_demo', stdout=StringIO())
+        call_command('seed_demo', stdout=StringIO())
+        self.assertEqual(Exam.objects.count(), 5)
+        self.assertEqual(User.objects.count(), 0)
+        self.assertEqual(Exam.objects.filter(status=ExamStatus.PENDING_REVIEW).count(), 3)
+
+    def test_seed_demo_can_create_a_staff_user(self):
+        from django.core.management import call_command
+        from io import StringIO
+        call_command('seed_demo', admin_username='demo', admin_password='demo-pass-123', stdout=StringIO())
+        user = User.objects.get(username='demo')
+        self.assertTrue(user.is_staff)
+        self.assertTrue(user.check_password('demo-pass-123'))

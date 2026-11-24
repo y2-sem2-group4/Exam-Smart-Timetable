@@ -1,7 +1,8 @@
 import json
 
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.db import DatabaseError
+from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_time
 from django.http import JsonResponse
 from django.middleware.csrf import get_token
@@ -57,6 +58,13 @@ def _validated_schedule(data, exam=None):
         raise ValueError('start_time and end_time must be valid times.')
     if end_time <= start_time:
         raise ValueError('end_time must be after start_time.')
+    # BE-11: reject past dates, but only when creating an exam or moving it to a
+    # different date. Changing the room of (or re-checking) an exam whose date has
+    # already passed must still work, otherwise old exams can never be resolved.
+    date_changed = exam is None or exam_date != exam.exam_date
+    if date_changed and exam_date < timezone.localdate():
+        raise ValueError('exam_date cannot be in the past.')
+
     return exam_date, start_time, end_time
 
 
@@ -82,6 +90,17 @@ def admin_login(request):
 
     login(request, user)
     return JsonResponse({'message': 'Login successful'})
+
+@require_http_methods(['POST'])
+def admin_logout(request):
+    logout(request)
+    return JsonResponse({'message': 'Logged out successfully'})
+
+
+@require_GET
+def admin_session(request):
+    """Lets the admin pages confirm the server-side session is still valid."""
+    return JsonResponse({'authenticated': _require_staff(request)})
 
 
 @require_http_methods(['GET', 'POST'])
@@ -185,4 +204,43 @@ def student_timetable(request, admission_number):
     return JsonResponse({
         'admission_number': student.admission_number,
         'exams': [_exam_data(exam) for exam in exams],
+    })
+
+@require_GET
+def suggest_room(request, pk):
+    if not _require_staff(request):
+        return JsonResponse({'error': 'Forbidden'}, status=403)
+
+    try:
+        exam = Exam.objects.select_related('unit').get(pk=pk)
+    except Exam.DoesNotExist:
+        return JsonResponse({'error': 'Exam not found'}, status=404)
+
+    # Get all exams happening at the same time
+    overlapping_exams = Exam.objects.filter(
+        exam_date=exam.exam_date,
+        start_time__lt=exam.end_time,
+        end_time__gt=exam.start_time
+    ).exclude(id=exam.id)
+
+    # Get the IDs of rooms that are already booked
+    # Exams with no room assigned must not take part in the NOT IN filter below:
+    # a NULL in a NOT IN subquery would exclude every room.
+    booked_room_ids = overlapping_exams.filter(
+        room__isnull=False
+    ).values_list('room_id', flat=True)
+
+    # Count enrolled students for this unit
+    enrolled_count = Enrolment.objects.filter(unit=exam.unit).count()
+
+    # Find rooms that are NOT booked and have enough capacity
+    available_rooms = Room.objects.exclude(id__in=booked_room_ids).filter(
+        capacity__gte=enrolled_count
+    ).order_by('capacity', 'room_name').values('id', 'room_name', 'capacity')
+
+    return JsonResponse({
+        'exam_id': exam.id,
+        'unit_code': exam.unit.unit_code,
+        'required_capacity': enrolled_count,
+        'suggested_rooms': list(available_rooms)
     })
